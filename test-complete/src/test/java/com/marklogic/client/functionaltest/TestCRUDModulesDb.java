@@ -197,7 +197,7 @@ public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSu
 
 		// read it back
 		String xqueryModuleAsString = libsMgr.read(Path, new StringHandle()).get();
-		assertTrue("module read and read back", xqueryModuleAsString.startsWith("Copyright 2012 MarkLogic Corporation"));
+		assertTrue("module read and read back", xqueryModuleAsString.startsWith("Copyright 2017 MarkLogic Corporation"));
 		
 		// get the list of descriptors
 		ExtensionLibraryDescriptor[] descriptors = libsMgr.list();
