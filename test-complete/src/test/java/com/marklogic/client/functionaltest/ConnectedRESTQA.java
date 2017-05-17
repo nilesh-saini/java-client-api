@@ -2678,7 +2678,7 @@ public abstract class ConnectedRESTQA {
 				+ "\"ldap-default-user\":\"\","
 				+ "\"ldap-password\":\"\","
 				+ "\"ldap-bind-method\":\"MD5\","
-				+ "\"ssl-require-client-certificate\":\"false\""
+				+ "\"ssl-require-client-certificate\":\"true\""
 				+ "}";
 
 		HttpPost post = new HttpPost("http://localhost:8002/manage/v2/external-security");
