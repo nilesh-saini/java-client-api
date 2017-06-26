@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.Format;
@@ -43,13 +42,14 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 
 	private static String dbName = "TestQueryOptionBuilderGrammarDB";
 	private static String [] fNames = {"TestQueryOptionBuilderGrammarDB-1"};
-	
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -64,8 +64,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 		System.out.println("Running testGrammarOperatorQuotation");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -120,14 +118,10 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 
 		// get the result
 		Document resultDoc = resultsHandle.get();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0113", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	} 
 
 	@Test	
@@ -136,8 +130,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 		System.out.println("Running testGrammarTwoWordsSpace");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -196,9 +188,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result']//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	} 
 
 	@Test	
@@ -207,8 +196,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 		System.out.println("Running testGrammarPrecedenceAndNegate");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -268,9 +255,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0024", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0113", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -279,8 +263,6 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 		System.out.println("Running testGrammarConstraint");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -344,14 +326,13 @@ public class TestQueryOptionBuilderGrammar extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0024", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

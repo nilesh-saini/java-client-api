@@ -36,7 +36,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.DocumentMetadataHandle.Capability;
@@ -48,7 +47,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 
 	private static String dbName = "TestSearchOptionsDB";
 	private static String [] fNames = {"TestSearchOptionsDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception 
@@ -56,6 +55,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		 client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -73,11 +73,8 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "searchReturnResultsFalseOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-results-false/", "XML");
 		}
 
@@ -98,10 +95,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='response']//@*[local-name()='total'])", resultDoc);
-		assertXpathNotExists("//*[local-name()='result']", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathNotExists("//*[local-name()='result']", resultDoc);			
 	}
 
 	@Test	
@@ -112,8 +106,6 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "setViewOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
 
@@ -123,8 +115,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		metadataHandle.getPermissions().add("app-user", Capability.UPDATE, Capability.READ);
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-setview-meta/", metadataHandle, "XML");
 		}
 
@@ -146,10 +137,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='response']//@*[local-name()='start'])", resultDoc);
-		assertXpathExists("//*[local-name()='metrics']", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathExists("//*[local-name()='metrics']", resultDoc);				
 	}
 
 	@Test	
@@ -160,11 +148,8 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "setViewOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-setview-results/", "XML");
 		}
 
@@ -183,13 +168,9 @@ public class TestSearchOptions extends BasicJavaClientREST {
 
 		// get the result
 		Document resultDoc = resultsHandle.get();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='response']//@*[local-name()='total'])", resultDoc);
 		assertXpathExists("//*[local-name()='result']", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -200,11 +181,8 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "setViewOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-setview-facets/", "XML");
 		}
 
@@ -226,10 +204,7 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		//System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='response']//@*[local-name()='total'])", resultDoc);
-		assertXpathExists("//*[local-name()='facet']", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathExists("//*[local-name()='facet']", resultDoc);			
 	}
 
 	@Test	
@@ -240,11 +215,8 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "setViewOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-setview-all/", "XML");
 		}
 
@@ -268,9 +240,6 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='response']//@*[local-name()='total'])", resultDoc);
 		assertXpathExists("//*[local-name()='result']", resultDoc);
 		assertXpathExists("//*[local-name()='facet']", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -281,11 +250,8 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "setViewOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/return-setview-all/", "XML");
 		}
 
@@ -310,15 +276,14 @@ public class TestSearchOptions extends BasicJavaClientREST {
 		assertXpathExists("//*[local-name()='result']", resultDoc);
 		assertXpathExists("//*[local-name()='facet']", resultDoc);
 		assertXpathExists("//*[local-name()='metrics']", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@AfterClass	
 	public static  void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

@@ -37,7 +37,6 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.DOMHandle;
@@ -48,7 +47,8 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 
 	private static String dbName = "TestRollbackTransactionDB";
 	private static String [] fNames = {"TestRollbackTransactionDB-1"};
-	
+	private static DatabaseClient clientA = null;
+	private static DatabaseClient clientW = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception 
@@ -56,6 +56,8 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		clientA = getDatabaseClientWithDigest("rest-admin", "x");
+		clientW = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -65,16 +67,14 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 
 		String filename = "bbq1.xml";
 		String uri = "/tx-rollback/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+		
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
 		// create transaction 1
-		Transaction transaction1 = client.openTransaction();
+		Transaction transaction1 = clientA.openTransaction();
 
 		// create a manager for document
-		DocumentManager docMgr = client.newDocumentManager();
+		DocumentManager docMgr = clientA.newDocumentManager();
 
 		// create an identifier for the document
 		String docId = uri + filename;
@@ -91,7 +91,7 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		transaction1.commit();		
 
 		// create transaction 2
-		Transaction transaction2 = client.openTransaction();
+		Transaction transaction2 = clientA.openTransaction();
 
 		// delete document
 		docMgr.delete(docId, transaction2);
@@ -110,10 +110,7 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		// convert actual string to xml doc
 		Document readDoc = convertStringToXMLDocument(readContent);
 
-		assertXMLEqual("Rollback on document delete failed", expectedDoc, readDoc);
-
-		// release client
-		client.release();
+		assertXMLEqual("Rollback on document delete failed", expectedDoc, readDoc);	
 	}
 
 	@Test	
@@ -125,15 +122,13 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		String updateFilename = "json-updated.json";
 		String uri = "/tx-rollback/";
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
 		// create transaction 1
-		Transaction transaction1 = client.openTransaction();
+		Transaction transaction1 = clientW.openTransaction();
 
 		// create a manager for document
-		DocumentManager docMgr = client.newDocumentManager();
+		DocumentManager docMgr = clientW.newDocumentManager();
 
 		// create an identifier for the document
 		String docId = uri + filename;
@@ -150,7 +145,7 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		transaction1.commit();		
 
 		// create transaction 2
-		Transaction transaction2 = client.openTransaction();
+		Transaction transaction2 = clientW.openTransaction();
 
 		// update document
 		File updateFile = new File("src/test/java/com/marklogic/client/functionaltest/data/" + updateFilename);
@@ -173,9 +168,6 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		JsonNode expectedContent = expectedJSONDocument(filename);
 
 		assertTrue("Rollback on document update failed", readContent.equals(expectedContent));		
-
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -186,16 +178,13 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		String filename = "Simple_ScanTe.png";
 		String uri = "/tx-rollback/";
 
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
 		// create transaction 1
-		Transaction transaction1 = client.openTransaction();
+		Transaction transaction1 = clientW.openTransaction();
 
 		// create doc manager
-		DocumentManager docMgr = client.newDocumentManager();
+		DocumentManager docMgr = clientW.newDocumentManager();
 
 		// create an identifier for the document
 		String docId = uri + filename;
@@ -222,7 +211,7 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		transaction1.commit();		
 
 		// create transaction 2
-		Transaction transaction2 = client.openTransaction();
+		Transaction transaction2 = clientW.openTransaction();
 
 		// get the update metadata
 		Document docMetadataUpdate = getXMLMetadata("metadata-updated.xml");
@@ -233,9 +222,6 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 
 		// write updated metadata
 		docMgr.writeMetadata(docId, writeMetadataHandleUpdate, transaction2);
-
-		// commit transaction2
-		//transaction2.commit();
 
 		// rollback transaction2
 		transaction2.rollback();
@@ -250,9 +236,6 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("coll1", "string(//*[local-name()='collection'][1])", docReadMetadataUpdate);
 		assertXpathEvaluatesTo("coll2", "string(//*[local-name()='collection'][2])", docReadMetadataUpdate);
 		assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='Author'])", docReadMetadataUpdate);
-
-		// release the client
-		client.release();
 	}	
 
 	@Test	
@@ -263,15 +246,13 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		String filename = "bbq1.xml";
 		String uri = "/tx-rollback/";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
 		// create transaction 1
-		Transaction transaction1 = client.openTransaction();
+		Transaction transaction1 = clientA.openTransaction();
 
 		// create a manager for document
-		DocumentManager docMgr = client.newDocumentManager();
+		DocumentManager docMgr = clientA.newDocumentManager();
 
 		// create an identifier for the document
 		String docId = uri + filename;
@@ -288,7 +269,7 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		transaction1.commit();		
 
 		// create transaction 2
-		Transaction transaction2 = client.openTransaction();
+		Transaction transaction2 = clientA.openTransaction();
 
 		// delete document
 		docMgr.delete(docId, transaction2);
@@ -300,22 +281,20 @@ public class TestRollbackTransaction extends BasicJavaClientREST {
 		String exception = "";
 
 		// rollback transaction
-		try
-		{
+		try {
 			transaction2.rollback();
 		} catch(Exception e) { exception = e.toString(); };
 
 		assertTrue("Exception is not thrown", exception.contains(expectedException));
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		clientA.release();
+		clientW.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

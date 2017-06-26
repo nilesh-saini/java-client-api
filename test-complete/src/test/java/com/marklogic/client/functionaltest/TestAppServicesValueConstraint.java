@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
@@ -42,7 +41,7 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 
 	private static String dbName = "AppServicesValueConstraintDB";
 	private static String [] fNames = {"AppServicesValueConstraintDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception 
@@ -50,7 +49,9 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
+	
 	@After
 	public  void testCleanUp() throws Exception
 	{
@@ -66,11 +67,8 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/value-constraint/", "XML");
 		}
 		
@@ -95,10 +93,7 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-value-query(fn:QName(\"\",\"id\"), \"00*2\", (\"lang=en\"), 1), cts:element-value-query(fn:QName(\"\",\"id\"), \"0??6\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
 	
@@ -109,12 +104,9 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintGoogleGrammarOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/value-constraint/", "XML");
 		}
 		
@@ -142,11 +134,7 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-value-query(fn:QName(\"\",\"title\"), \"The memex\", (\"lang=en\"), 1), cts:and-query((cts:element-value-query(fn:QName(\"\",\"id\"), \"0113\", (\"lang=en\"), 1), cts:element-value-query(fn:QName(\"http://purl.org/dc/elements/1.1/\",\"date\"), \"2007-03-03\", (\"lang=en\"), 1)), ())), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
-
 
 	@Test
 	public void testWithoutIndexSettingsAndNS() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -155,12 +143,9 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/value-constraint/", "XML");
 		}
 		
@@ -184,10 +169,7 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:element-value-query(fn:QName(\"\",\"id\"), \"0012\", (\"lang=en\"), 1), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
 	@Test	
@@ -197,12 +179,9 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithIndexSettingsAndNSOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/value-constraint/", "XML");
 		}
 		
@@ -226,13 +205,9 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:element-value-query(fn:QName(\"http://purl.org/dc/elements/1.1/\",\"date\"), \"2007-03-03\", (\"lang=en\"), 1), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
-	
 	@Test	
 	public void testSpaceSeparated() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
 	{	
@@ -241,11 +216,8 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintSpaceSeparatedOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/value-constraint/", "XML");
 		}
 		
@@ -270,16 +242,15 @@ public class TestAppServicesValueConstraint extends BasicJavaClientREST {
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:and-query((cts:element-value-query(fn:QName(\"\",\"title\"), \"Vannevar Bush\", (\"lang=en\"), 1), cts:element-attribute-value-query(fn:QName(\"http://cloudbank.com\",\"price\"), fn:QName(\"\",\"amt\"), \"0.1\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

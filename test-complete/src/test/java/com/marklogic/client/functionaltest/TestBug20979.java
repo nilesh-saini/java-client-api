@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.QueryManager;
@@ -41,6 +40,7 @@ public class TestBug20979 extends BasicJavaClientREST {
 
 	private static String dbName = "TestBug20979DB";
 	private static String [] fNames = {"TestBug20979DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -48,6 +48,7 @@ public class TestBug20979 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -58,11 +59,8 @@ public class TestBug20979 extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "wordConstraintWithElementAndAttributeIndexPlanOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/word-constraint/", "XML");
 		}
 		
@@ -79,22 +77,18 @@ public class TestBug20979 extends BasicJavaClientREST {
 		queryMgr.search(querydef, resultsHandle);
 		
 		// get the result
-		//Document resultDoc = resultsHandle.getPlan();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
-		
 		String strPlan = resultsHandle.getPlan(new StringHandle()).get();
 		System.out.println(strPlan);
 		
-		assertTrue("string is not matched", strPlan.contains("qry:result estimate=\"3\""));
-		
-		// release client
-		client.release();		
+		assertTrue("string is not matched", strPlan.contains("qry:result estimate=\"3\""));	
 	}
+
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();	
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

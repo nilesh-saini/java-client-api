@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
@@ -39,12 +38,14 @@ public class TestBug19016 extends BasicJavaClientREST {
 
 	private static String dbName = "Bug19016DB";
 	private static String [] fNames = {"Bug19016DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test
@@ -53,12 +54,9 @@ public class TestBug19016 extends BasicJavaClientREST {
 		System.out.println("Running testBug19016");
 		
 		String[] filenames = {"bug19016.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/bug19016/", "XML");
 		}
 		
@@ -73,15 +71,14 @@ public class TestBug19016 extends BasicJavaClientREST {
 		System.out.println(result);
 		
 		assertTrue("qtext is not correct", result.contains("<search:qtext>this\"is\"an%33odd string</search:qtext>"));
-		
-		// release client
-		client.release();		
 	}
+	
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
-		
 	}
 }

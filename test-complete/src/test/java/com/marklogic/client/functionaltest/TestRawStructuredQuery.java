@@ -38,7 +38,6 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -48,18 +47,18 @@ import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.RawStructuredQueryDefinition;
-import com.marklogic.client.query.StructuredQueryDefinition;
 
 public class TestRawStructuredQuery extends BasicJavaClientREST {
 	private static String dbName = "TestRawStructuredQueryDB";
 	private static String [] fNames = {"TestRawStructuredQueryDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass	
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
-		System.out.println("after setup");
+		client = getDatabaseClientWithDigest("rest-admin", "x");		
 	}
 
 	@After
@@ -74,8 +73,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawStructuredQueryXML");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -110,9 +107,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -121,8 +115,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawStructuredQueryJSON");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -158,10 +150,7 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		System.out.println(resultDoc);
 
-		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint5.xml"));
-
-		// release client
-		client.release();		
+		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint5.xml"));	
 	}
 
 	@Test	
@@ -171,8 +160,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -209,9 +196,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -221,8 +205,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -261,9 +243,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println(resultDoc);
 
 		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint1.xml"));
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -276,8 +255,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -323,10 +300,7 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);	
 	}
 
 	@Test	
@@ -339,8 +313,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -386,10 +358,7 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);	
 	}
 
 	@Test	
@@ -398,8 +367,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawStructuredQueryField");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -431,9 +398,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='match'][2]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("Memex", "string(//*[local-name()='result'][1]//*[local-name()='match'][3]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("Bush", "string(//*[local-name()='result'][2]//*[local-name()='match'][1]//*[local-name()='highlight'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -442,8 +406,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawStructuredQueryPathIndex");
 
 		String[] filenames = {"pathindex1.xml", "pathindex2.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -472,10 +434,7 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/path-index-raw/pathindex2.xml", "string(//*[local-name()='result'][1]//@*[local-name()='uri'])", resultDoc);
-		assertXpathEvaluatesTo("/path-index-raw/pathindex1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/path-index-raw/pathindex1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);	
 	}
 	
 	/*
@@ -492,8 +451,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRSQuerySetCriteria");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -564,9 +521,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		JsonNode nodeNeg2 = resultsNeg2.get();
 		// Return 0 node
 		assertEquals("Number of results returned incorrect in response", "0", nodeNeg2.path("total").asText());
-		
-		// release client
-		client.release();		
 	}
 	
 	/*
@@ -583,8 +537,6 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		System.out.println("Running testRSQueryWithCriteria");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -661,15 +613,14 @@ public class TestRawStructuredQuery extends BasicJavaClientREST {
 		JsonNode node2 = results2.get();
 		// Returns 1 node. constraint1.xml
 		assertEquals("Number of results returned incorrect in response", "1", node2.path("total").asText());
-		assertEquals("Result returned incorrect in response", "/raw-combined-query/constraint1.xml", node2.path("results").get(0).path("uri").asText());
-			
-		// release client
-		client.release();		
+		assertEquals("Result returned incorrect in response", "/raw-combined-query/constraint1.xml", node2.path("results").get(0).path("uri").asText());		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

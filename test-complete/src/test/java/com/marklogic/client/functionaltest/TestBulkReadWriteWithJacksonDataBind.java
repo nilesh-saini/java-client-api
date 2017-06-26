@@ -26,14 +26,11 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
@@ -58,10 +55,8 @@ public class TestBulkReadWriteWithJacksonDataBind extends
 		BasicJavaClientREST {	
 	private static final String DIRECTORY = "/";
 	private static String dbName = "TestBulkJacksonDataBindDB";
-	private static String[] fNames = { "TestBulkJacksonDataBindDB-1" };
-	
-	
-	private DatabaseClient client;
+	private static String[] fNames = { "TestBulkJacksonDataBindDB-1" };	
+	private static DatabaseClient client = null;
 	
 	public static class ContentCheck
 	{
@@ -81,19 +76,8 @@ public class TestBulkReadWriteWithJacksonDataBind extends
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
-	}
-
-	@Before
-	public void testSetup() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		// create new connection for each test below
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void testCleanUp() throws Exception {
-		System.out.println("Running CleanUp script");
-		// release client
-		client.release();
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	public DocumentMetadataHandle setMetadata() {
@@ -525,6 +509,8 @@ public class TestBulkReadWriteWithJacksonDataBind extends
 	@AfterClass
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

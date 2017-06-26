@@ -16,7 +16,8 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +45,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.document.DocumentPatchBuilder;
 import com.marklogic.client.document.DocumentPatchBuilder.PathLanguage;
@@ -58,6 +58,7 @@ import com.marklogic.client.io.marker.DocumentPatchHandle;
 public class TestPointInTimeQuery extends BasicJavaClientREST {
 	private static String dbName = "TestPointInTimeQueryDB";
 	private static String [] fNames = {"TestPointInTimeQuery-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass	
 	public static void setUp() throws Exception {
@@ -69,6 +70,7 @@ public class TestPointInTimeQuery extends BasicJavaClientREST {
 	    createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
 		// set to - 60 seconds
 		setDatabaseProperties(dbName, "merge-timestamp","-600000000");
+		client = getDatabaseClientWithDigest("eval-user", "x");
 	}
 	
 	@After
@@ -99,8 +101,6 @@ public class TestPointInTimeQuery extends BasicJavaClientREST {
 		System.out.println("Running testAInsertAndUpdateJson");
 
 		String[] filenames = {"json-original.json"};
-
-		DatabaseClient client = getDatabaseClient("eval-user", "x", Authentication.DIGEST);
 
 		// write docs and save the timestamps in the array
 		
@@ -220,10 +220,7 @@ public class TestPointInTimeQuery extends BasicJavaClientREST {
 		System.out.println("Number of active Fragments after second update " + activeFragCount);
 		System.out.println("Number of deleted Fragments after second update " + deletedFragCount);
 		assertTrue("Number of active Fragments after initial insert is incorrect. Should be 1", activeFragCount == 1);
-		assertTrue("Number of deleted Fragments after initial insert is incorrect. Should be 2", deletedFragCount == 2);
-		
-		// release client
-		client.release();		
+		assertTrue("Number of deleted Fragments after initial insert is incorrect. Should be 2", deletedFragCount == 2);	
 	}
 	
 	/* This test verifies if fragments are available for a document that
@@ -369,8 +366,7 @@ public class TestPointInTimeQuery extends BasicJavaClientREST {
 		return jnode;
 		} catch (Exception e) {
 			// writing error to Log
-			e.printStackTrace();
-			
+			e.printStackTrace();			
 			return jnode;
 		}
 		finally {
@@ -383,6 +379,8 @@ public class TestPointInTimeQuery extends BasicJavaClientREST {
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.query.QueryManager;
@@ -43,23 +42,25 @@ import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesCollectionConstraint extends BasicJavaClientREST {
 
-//	private String serverName = "";
 	private static String dbName = "AppServicesCollectionConstraintDB";
 	private static String [] fNames = {"AppServicesCollectionConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
-@BeforeClass
+    @BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  System.out.println("In setup");
-	 configureRESTServer(dbName, fNames);
+	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
-@After
-public  void testCleanUp() throws Exception
-{
-	clearDB();
-	System.out.println("Running clear script");
-}
+    
+    @After
+    public  void testCleanUp() throws Exception
+    {
+	  clearDB();
+	  System.out.println("Running clear script");
+    }
 
 	//@Test
 	public void testWithFacet() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
@@ -72,8 +73,6 @@ public  void testCleanUp() throws Exception
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "collectionConstraintWithFacetOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -121,11 +120,7 @@ public  void testCleanUp() throws Exception
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:collection-query(\"http://test.com/set3\"), (\"score-logtfidf\",\"faceted\"), 1))[1 to 10]";
 		
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
-
 	
 	@Test
 	public void testWithNoFacet() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
@@ -138,8 +133,6 @@ public  void testCleanUp() throws Exception
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "collectionConstraintWithNoFacetOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -186,10 +179,7 @@ public  void testCleanUp() throws Exception
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:collection-query(\"http://test.com/set3\"), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);		
 	}
 
 	
@@ -204,8 +194,6 @@ public  void testCleanUp() throws Exception
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "collectionConstraintWithWordConstraintAndGoogleGrammarOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -251,14 +239,15 @@ public  void testCleanUp() throws Exception
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:and-query((cts:collection-query(\"http://test.com/set1\"), cts:collection-query(\"http://test.com/set5\"), cts:not-query(cts:element-word-query(fn:QName(\"\", \"title\"), \"memex\", (\"lang=en\"), 1), 1)), ()), (\"score-logtfidf\"), 1))[1 to 10]";
 		
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+	
 	}
-@AfterClass
+	
+    @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

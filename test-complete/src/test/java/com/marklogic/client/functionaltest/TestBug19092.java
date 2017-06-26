@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -41,21 +40,20 @@ public class TestBug19092 extends BasicJavaClientREST {
 
 	private static String dbName = "Bug19092DB";
 	private static String [] fNames = {"Bug19092DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
 	public void testBug19092() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
 		System.out.println("Running testBug19092");
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create query options manager
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
 		
@@ -80,17 +78,12 @@ public class TestBug19092 extends BasicJavaClientREST {
      	assertTrue("Default term is not correct", output.contains("<ns2:term-option>case-sensitive</ns2:term-option>") || output.contains("<search:term-option>case-sensitive</search:term-option>"));
      	assertFalse("Weight element exists", output.contains("<ns2:weight>0.0</ns2:weight>") || output.contains("<search:weight>0.0</search:weight>"));
      	assertFalse("Default element exists", output.contains("<ns2:default/>") || output.contains("<search:default/>"));
-     	
-		// release client
-		client.release();		
 	}
 
 @Test
 	public void testBug19092WithJson() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
 		System.out.println("Running testBug19092WithJson");
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create query options manager
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -114,14 +107,13 @@ public class TestBug19092 extends BasicJavaClientREST {
      	System.out.println(output);
      	
      	assertTrue("Default term is not correct", output.contains("{\"options\":{\"term\":{\"term-option\":[\"case-sensitive\"]}}}"));
-     	
-		// release client
-		client.release();		
 	}
 
 	@AfterClass
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 
+import junit.framework.Assert;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -43,12 +45,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.DatabaseClientFactory.CertificateAuthContext;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.document.TextDocumentManager;
 import com.marklogic.client.io.StringHandle;
-
-import junit.framework.Assert;
 
 public class TestDatabaseClientWithCertBasedAuth extends BasicJavaClientREST{
 	
@@ -69,7 +69,7 @@ public class TestDatabaseClientWithCertBasedAuth extends BasicJavaClientREST{
 		createRESTServerWithDB(server, port);
 		createRESTUser("portal", "seekrit", "admin","rest-admin","rest-writer","rest-reader" );
 		associateRESTServerWithDB(setupServer,"Security");
-		secClient = DatabaseClientFactory.newClient(host, setupPort,"admin","admin", Authentication.DIGEST);
+		secClient = DatabaseClientFactory.newClient(host, setupPort,new DigestAuthContext("admin","admin"));
 		
 		createCACert();
 		createCertTemplate();

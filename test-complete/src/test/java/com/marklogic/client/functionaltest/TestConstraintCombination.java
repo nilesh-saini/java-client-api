@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.query.QueryManager;
@@ -42,9 +41,8 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 
 	private static String dbName = "ConstraintCombinationDB";
 	private static String [] fNames = {"ConstraintCombinationDB-1"};
-	
-	
-	
+	private static DatabaseClient client = null;
+		
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
@@ -58,6 +56,7 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 	  includeElementField(dbName, "bbqtext", "http://example.com", "abstract");
 	  enableCollectionLexicon(dbName);
 	  enableTrailingWildcardSearches(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @After
@@ -80,9 +79,7 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		
 		String queryOptionName = "constraintCombinationOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
-	    // create and initialize a handle on the metadata
+		// create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
 	    DocumentMetadataHandle metadataHandle2 = new DocumentMetadataHandle();
 	    DocumentMetadataHandle metadataHandle3 = new DocumentMetadataHandle();
@@ -121,10 +118,7 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/combination-constraint/bbq1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='facet']//*[local-name()='facet-value']//@*[local-name()='count'])", resultDoc);
-		assertXpathEvaluatesTo("Moderate (500 - 2500)", "string(//*[local-name()='facet']//*[local-name()='facet-value'])", resultDoc);
-	    
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("Moderate (500 - 2500)", "string(//*[local-name()='facet']//*[local-name()='facet-value'])", resultDoc);		
 	}
 
 @Test
@@ -140,8 +134,6 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		
 		String queryOptionName = "constraintCombinationOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
 	    DocumentMetadataHandle metadataHandle2 = new DocumentMetadataHandle();
@@ -179,10 +171,7 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/combination-constraint/bbq4.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/combination-constraint/bbq4.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);	
 	}
 
 @Test
@@ -197,8 +186,6 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		String filename5 = "bbq5.xml";
 		
 		String queryOptionName = "constraintCombinationOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 				
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -237,15 +224,15 @@ public class TestConstraintCombination extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/combination-constraint/bbq3.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/combination-constraint/bbq3.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);				
 	}
+
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

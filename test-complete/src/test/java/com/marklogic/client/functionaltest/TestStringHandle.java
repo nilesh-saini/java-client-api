@@ -36,7 +36,6 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.StringHandle;
 
@@ -44,13 +43,14 @@ public class TestStringHandle extends BasicJavaClientREST {
 
 	private static String dbName = "StringDB";
 	private static String [] fNames = {"StringDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -61,17 +61,11 @@ public class TestStringHandle extends BasicJavaClientREST {
 
 		System.out.println("Running testXmlCRUD");
 
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
 		writeDocumentUsingStringHandle(client, filename, uri, "XML");
 
 		// read docs
 		StringHandle contentHandle = readDocumentUsingStringHandle(client, uri + filename, "XML");
-
-		// get the contents
-		//	File fileRead = contentHandle.get();
 
 		String readContent = contentHandle.get();
 
@@ -107,17 +101,13 @@ public class TestStringHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentUsingFileHandle(client, uri + filename, "XML");
 		} 
 		catch (Exception e) { exception = e.toString(); }
 
 		String expectedException = "com.marklogic.client.ResourceNotFoundException: Local message: Could not read non-existent document. Server Message: RESTAPI-NODOCUMENT: (err:FOER0000) Resource or document does not exist:  category: content message: /write-xml-string/xml-original-test.xml";
 		assertEquals("Document is not deleted", expectedException, exception);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -128,17 +118,11 @@ public class TestStringHandle extends BasicJavaClientREST {
 
 		System.out.println("Running testTextCRUD");
 
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
 		writeDocumentUsingStringHandle(client, filename, uri, "Text");
 
 		// read docs
 		StringHandle contentHandle = readDocumentUsingStringHandle(client, uri + filename, "Text");
-
-		// get the contents
-		//	    File fileRead = contentHandle.get();
 
 		String readContent = contentHandle.get();
 
@@ -154,9 +138,6 @@ public class TestStringHandle extends BasicJavaClientREST {
 		// read the document
 		StringHandle updateHandle = readDocumentUsingStringHandle(client, uri + filename, "Text");
 
-		// get the contents
-		//		File fileReadUpdate = updateHandle.get();
-
 		String readContentUpdate = updateHandle.get();
 
 		String expectedContentUpdate = "hello world, welcome to java API after new updates";
@@ -167,17 +148,13 @@ public class TestStringHandle extends BasicJavaClientREST {
 		deleteDocument(client, uri + filename, "Text");
 
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentUsingFileHandle(client, uri + filename, "Text");
 		} 
 		catch (Exception e) { exception = e.toString(); }
 
 		String expectedException = "com.marklogic.client.ResourceNotFoundException: Local message: Could not read non-existent document. Server Message: RESTAPI-NODOCUMENT: (err:FOER0000) Resource or document does not exist:  category: content message: /write-text-stringhandle/text-original.txt";
 		assertEquals("Document is not deleted", expectedException, exception);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -189,9 +166,6 @@ public class TestStringHandle extends BasicJavaClientREST {
 		System.out.println("Running testJsonCRUD");
 
 		ObjectMapper mapper = new ObjectMapper();
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write docs
 		writeDocumentUsingStringHandle(client, filename, uri, "JSON");
@@ -229,31 +203,22 @@ public class TestStringHandle extends BasicJavaClientREST {
 		deleteDocument(client, uri + filename, "JSON");
 
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentUsingFileHandle(client, uri + filename, "JSON");
 		} 
 		catch (Exception e) { exception = e.toString(); }
 
 		String expectedException = "com.marklogic.client.ResourceNotFoundException: Local message: Could not read non-existent document. Server Message: RESTAPI-NODOCUMENT: (err:FOER0000) Resource or document does not exist:  category: content message: /write-json-stringhandle/json-original.json";
 		assertEquals("Document is not deleted", expectedException, exception);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
 	public void testBug22356() throws KeyManagementException, NoSuchAlgorithmException, IOException,  SAXException, ParserConfigurationException
 	{	
 		System.out.println("Running testBug22356");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// read docs
 		StringHandle contentHandle = null;
-		try
-		{
+		try {
 			// get the contents
 			contentHandle.get();
 		} 
@@ -261,16 +226,14 @@ public class TestStringHandle extends BasicJavaClientREST {
 			System.out.println("Null pointer Exception is expected noy an Empty Value");
 			e.toString(); 
 		}
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

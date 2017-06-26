@@ -24,7 +24,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
 
@@ -35,19 +34,19 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.XMLEventReaderHandle;
 public class TestXMLEventReaderHandle extends BasicJavaClientREST {
 
 	private static String dbName = "XMLEventReaderHandleDB";
 	private static String [] fNames = {"XMLEventReaderHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -57,9 +56,6 @@ public class TestXMLEventReaderHandle extends BasicJavaClientREST {
 		String uri = "/write-xml-XMLEventReaderHandle/";
 
 		System.out.println("Running testXmlCRUD");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write the doc
 		writeDocumentReaderHandle(client, filename, uri, "XML");
@@ -103,8 +99,7 @@ public class TestXMLEventReaderHandle extends BasicJavaClientREST {
 		deleteDocument(client, uri + filename, "XML");
 
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentReaderHandle(client, uri + filename, "XML");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -112,15 +107,14 @@ public class TestXMLEventReaderHandle extends BasicJavaClientREST {
 		String expectedException = "Could not read non-existent document";
 		boolean documentIsDeleted = exception.contains(expectedException);
 		assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release the client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release the client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

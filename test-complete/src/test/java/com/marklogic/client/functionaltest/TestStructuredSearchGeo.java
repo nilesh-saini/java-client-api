@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StructuredQueryBuilder;
@@ -45,7 +44,7 @@ public class TestStructuredSearchGeo extends BasicJavaClientREST {
 
 	private static String dbName = "TestStructuredSearchGeoDB";
 	private static String [] fNames = {"TestStructuredSearchGeoDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
@@ -53,20 +52,17 @@ public class TestStructuredSearchGeo extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesGeoConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testTestStructuredSearchGeo() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
 		System.out.println("Running testTestStructuredSearchGeo");
-
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 
@@ -87,21 +83,14 @@ public class TestStructuredSearchGeo extends BasicJavaClientREST {
 		// get the result
 		Document resultDoc = resultsHandle.get();
 
-		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		//assertXpathEvaluatesTo("karl_kara 12,5 12,5 12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
 	public void testTestStructuredSearchGeoBox() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
 		System.out.println("Running testTestStructuredSearchGeoBox");
-
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		loadGeoData();
@@ -126,19 +115,13 @@ public class TestStructuredSearchGeo extends BasicJavaClientREST {
 		System.out.println("Output : " + convertXMLDocumentToString(resultDoc));
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/geo-constraint/geo-constraint2.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
 	public void testTestStructuredSearchGeoBoxAndPath() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
 		System.out.println("Running testTestStructuredSearchGeoBoxAndPath" + "This test is for Bug : 22071 & 22136");
-
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		loadGeoData();
@@ -172,16 +155,15 @@ public class TestStructuredSearchGeo extends BasicJavaClientREST {
 		// get the result
 		Document resultDoc = resultsHandle.get();
 		System.out.println("Output : " + convertXMLDocumentToString(resultDoc));
-		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

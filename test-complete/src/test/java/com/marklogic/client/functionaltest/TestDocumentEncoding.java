@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -41,30 +42,27 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.StringHandle;
-import javax.xml.transform.Source;
 
 public class TestDocumentEncoding extends BasicJavaClientREST
 {
 	private static String dbName = "DocumentEncodingDB";
 	private static String [] fNames = {"DocumentEncodingDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test
 	public void testEncoding() throws KeyManagementException, NoSuchAlgorithmException, IOException,  TransformerException, ParserConfigurationException
-	{
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+	{	
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         DOMImplementation impl = builder.getDOMImplementation();
@@ -102,8 +100,6 @@ public class TestDocumentEncoding extends BasicJavaClientREST
         int length1 = docMgr.read("/doc/foo.xml", new BytesHandle()).get().length;
         System.out.println(length1);
         
-        // ************************
-        
         DocumentBuilderFactory factory2 = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder2 = factory2.newDocumentBuilder();
         DOMImplementation impl2 = builder2.getDOMImplementation();
@@ -140,15 +136,12 @@ public class TestDocumentEncoding extends BasicJavaClientREST
         System.out.println(length2);
         
         assertEquals("Byte size is not the same", length1, length2);
-        
-        // **************************
-		
-		client.release();
 	}
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

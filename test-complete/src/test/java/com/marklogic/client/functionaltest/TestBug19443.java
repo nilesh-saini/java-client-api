@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -35,12 +34,14 @@ public class TestBug19443 extends BasicJavaClientREST {
 
 	private static String dbName = "TestBug19443DB";
 	private static String [] fNames = {"TestBug19443DB-1"};
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -53,8 +54,6 @@ public class TestBug19443 extends BasicJavaClientREST {
 	public void testBug19443() throws KeyManagementException, NoSuchAlgorithmException, Exception
 	{	
 		System.out.println("Running testBug19443");
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create query options manager
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -97,14 +96,13 @@ public class TestBug19443 extends BasicJavaClientREST {
 		System.out.println("Output is :  \n");
 		System.out.println(output);
 		assertTrue( "Element geo-option not available", actual.contains("<search:geo-option>type=long-lat-point</search:geo-option>") );
-
-		// release client
-		client.release();	
 	}
 	
 	@AfterClass
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

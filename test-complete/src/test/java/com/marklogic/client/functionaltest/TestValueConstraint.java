@@ -30,7 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.ReaderHandle;
@@ -46,7 +45,7 @@ public class TestValueConstraint extends BasicJavaClientREST {
 
 	private static String dbName = "ValueConstraintDB";
 	private static String [] fNames = {"ValueConstraintDB-1"};
-	
+	private static DatabaseClient client = null;
 	
 
 	@BeforeClass	
@@ -54,6 +53,7 @@ public class TestValueConstraint extends BasicJavaClientREST {
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 	
 	@After
@@ -66,8 +66,6 @@ public class TestValueConstraint extends BasicJavaClientREST {
 	@Test	
 	public void testElementValueConstraint() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 
@@ -77,8 +75,7 @@ public class TestValueConstraint extends BasicJavaClientREST {
 		ReaderHandle handle = new ReaderHandle();
 
 		// write the files
-		for (String filename: filenames) 
-		{	
+		for (String filename: filenames) {	
 			// acquire the content
 			BufferedReader docStream = new BufferedReader(new FileReader("src/test/java/com/marklogic/client/functionaltest/data/" + filename));
 
@@ -145,16 +142,11 @@ public class TestValueConstraint extends BasicJavaClientREST {
 
 		String expectedSearchMatch = "Matched 1 locations in /value-constraint/value-constraint-doc2.xml";
 		assertEquals("Search match difference", expectedSearchMatch, searchMatch);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
 	public void testAttributeValueConstraint() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 
@@ -165,8 +157,7 @@ public class TestValueConstraint extends BasicJavaClientREST {
 		ReaderHandle handle = new ReaderHandle();
 
 		// write the files
-		for (String filename: filenames) 
-		{	
+		for (String filename: filenames) {	
 			// acquire the content
 			BufferedReader docStream = new BufferedReader(new FileReader("src/test/java/com/marklogic/client/functionaltest/data/" + filename));
 
@@ -232,15 +223,14 @@ public class TestValueConstraint extends BasicJavaClientREST {
 
 		String expectedSearchMatch = "Matched 1 locations in /value-constraint/value-constraint-doc.xml";
 		assertEquals("Search match difference", expectedSearchMatch, searchMatch);
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

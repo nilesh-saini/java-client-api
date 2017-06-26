@@ -36,18 +36,19 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.InputStreamHandle;
 
 public class TestOutputStreamHandle extends BasicJavaClientREST {	
 	private static String dbName = "OutputStreamHandleDB";
 	private static String [] fNames = {"OutputStreamHandleDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test
@@ -58,9 +59,6 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 		
 		System.out.println("Running testXmlCRUD");
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-	
 		// write docs
 		writeDocumentUsingOutputStreamHandle(client, filename, uri, "XML");
 				
@@ -104,17 +102,13 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 	    
 		// read the deleted document
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "XML");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
 	    String expectedException = "Could not read non-existent document";
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
-	    
-		// release client
-		client.release();
 	}
 	
 	@Test
@@ -124,9 +118,6 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 		String uri = "/write-text-outputstreamhandle/";
 		
 		System.out.println("Running testTextCRUD");
-		
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// write docs
 		 writeDocumentUsingOutputStreamHandle(client, filename, uri, "Text");
@@ -165,17 +156,13 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "Text");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
 	    String expectedException = "Could not read non-existent document";
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -187,9 +174,6 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 		System.out.println("Running testJsonCRUD");
 		
 		ObjectMapper mapper = new ObjectMapper();
-		
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// write docs
 		 writeDocumentUsingOutputStreamHandle(client, filename, uri, "JSON");
@@ -231,17 +215,13 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 	    //assertFalse("Document is not deleted", isDocumentExist(client, uri + filename, "JSON"));
 	    
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "JSON");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
 	    String expectedException = "Could not read non-existent document";
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release client
-		client.release();
 	}
 	
 	@Test	
@@ -251,10 +231,7 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 		String uri = "/write-bin-outputstreamhandle/";
 		
 		System.out.println("Running testBinaryCRUD");
-		
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+
 		// write docs
 		writeDocumentUsingOutputStreamHandle(client, filename, uri, "Binary");
 				
@@ -292,23 +269,21 @@ public class TestOutputStreamHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "Binary");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
 	    String expectedException = "Could not read non-existent document";
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
-			    
-	    // release client
-		client.release();
 	}
+	
 @AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-		
 	}
 }

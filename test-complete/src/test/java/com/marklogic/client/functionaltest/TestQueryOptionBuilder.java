@@ -34,7 +34,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.document.XMLDocumentManager;
@@ -51,12 +50,14 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 	private static String dbName = "TestQueryOptionBuilderDB";
 	private static String [] fNames = {"TestQueryOptionBuilderDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -71,8 +72,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		System.out.println("Running testValueConstraintWildcard");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -128,10 +127,7 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-value-query(fn:QName(\"\",\"id\"), \"00*2\", (\"lang=en\"), 1), cts:element-value-query(fn:QName(\"\",\"id\"), \"0??6\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);			
 	}
 
 	@Test	
@@ -140,8 +136,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		System.out.println("Running testWordConstraintNormalWordQuery");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -205,10 +199,7 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:word-query(\"Memex\", (\"lang=en\"), 1), cts:element-attribute-word-query(fn:QName(\"http://cloudbank.com\",\"price\"), fn:QName(\"\",\"amt\"), \".12\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);			
 	}
 
 	@Test	
@@ -221,8 +212,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -327,10 +316,7 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);		
 	}
 
 	@Test	
@@ -343,8 +329,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -457,9 +441,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -469,8 +450,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String filename = "xml-original.xml";
 		String uri = "/extract-metadata/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		ServerConfigurationManager scMgr = client.newServerConfigManager();
 		scMgr.setServerRequestLogging(true);
@@ -543,10 +522,7 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='Author'])", resultDoc);
-		assertXpathEvaluatesTo("Microsoft Office Word", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='AppName'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("Microsoft Office Word", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='AppName'])", resultDoc);		
 	}
 
 	// See bug 18361
@@ -556,8 +532,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String filename = "xml-original.xml";
 		String uri = "/extract-metadata/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		ServerConfigurationManager scMgr = client.newServerConfigManager();
 		scMgr.setServerRequestLogging(true);
@@ -618,9 +592,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		//assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='Author'])", resultDoc);
 		//assertXpathEvaluatesTo("Microsoft Office Word", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='AppName'])", resultDoc);
-
-		// release client
-	    client.release();	
 	}*/
 
 	@Test	
@@ -630,8 +601,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String filename = "xml-original.xml";
 		String uri = "/extract-metadata/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		ServerConfigurationManager scMgr = client.newServerConfigManager();
 		scMgr.setServerRequestLogging(true);
@@ -706,10 +675,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='Author'])", resultDoc);
 		assertXpathEvaluatesTo("5", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='constraint-meta'])", resultDoc);
-		//assertXpathEvaluatesTo("Microsoft Office Word", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='AppName'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -719,8 +684,6 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		String filename = "xml-original.xml";
 		String uri = "/extract-metadata/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		ServerConfigurationManager scMgr = client.newServerConfigManager();
 		scMgr.setServerRequestLogging(true);
@@ -791,19 +754,15 @@ public class TestQueryOptionBuilder extends BasicJavaClientREST {
 
 		// get the result
 		Document resultDoc = resultsHandle.get();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
-
-		assertXpathEvaluatesTo("noodle", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='name'])", resultDoc);
-		//assertXpathEvaluatesTo("5", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='constraint-meta'])", resultDoc);
-		//assertXpathEvaluatesTo("Microsoft Office Word", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='AppName'])", resultDoc);
-
-		// release client
-		client.release();	
+		
+		assertXpathEvaluatesTo("noodle", "string(//*[local-name()='result']//*[local-name()='metadata']/*[local-name()='name'])", resultDoc);		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

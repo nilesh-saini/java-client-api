@@ -16,25 +16,34 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.document.XMLDocumentManager.DocumentRepair;
 import com.marklogic.client.io.FileHandle;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
-import org.junit.*;
 public class TestXMLDocumentRepair extends BasicJavaClientREST {
+	private static String hostname = null;
+	
 	@BeforeClass 
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
+		loadGradleProperties();
 		setupJavaRESTServerWithDB( "REST-Java-Client-API-Server-withDB", 8015);
-
+		hostname = getRestServerHostName();
 	}
 
 	@Test	
@@ -71,7 +80,7 @@ public class TestXMLDocumentRepair extends BasicJavaClientREST {
 		out.close();
 
 		// create database client
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", 8015, "rest-writer", "x", Authentication.DIGEST);
+		DatabaseClient client = DatabaseClientFactory.newClient(hostname, 8015, new DigestAuthContext("rest-writer", "x"));
 
 		// create doc id
 		String docId = "/repair/xml/" + file.getName();

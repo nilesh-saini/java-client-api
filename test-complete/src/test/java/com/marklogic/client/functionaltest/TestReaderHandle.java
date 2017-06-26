@@ -38,19 +38,19 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.ReaderHandle;
 
 public class TestReaderHandle extends BasicJavaClientREST {
 	private static String dbName = "WriteReaderHandleDB";
 	private static String [] fNames = {"WriteReaderHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -63,9 +63,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		XMLUnit.setIgnoreWhitespace(true);
 		XMLUnit.setNormalizeWhitespace(true);
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write the doc
 		writeDocumentReaderHandle(client, filename, uri, "XML");
@@ -107,24 +104,19 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		assertXMLEqual("Write XML difference", expectedDocUpdate, readDocUpdate);
 
-
 		// delete the document
 		deleteDocument(client, uri + filename, "XML");
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try	{
 			readDocumentReaderHandle(client, uri + filename, "XML");
 		} 
 		catch (Exception e) { exception = e.toString(); }
 
 		String expectedException = "Could not read non-existent document";
 		boolean documentIsDeleted = exception.contains(expectedException);
-		assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release the client
-		client.release();
+		assertTrue("Document is not deleted", documentIsDeleted);	
 	}
 
 	@Test	
@@ -134,9 +126,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		String filename = "text-original.txt";
 		String uri = "/write-text-readerhandle/";
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write the doc
 		writeDocumentReaderHandle(client, filename, uri, "Text");
@@ -175,8 +164,7 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentReaderHandle(client, uri + filename, "Text");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -184,9 +172,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		String expectedException = "Could not read non-existent document";
 		boolean documentIsDeleted = exception.contains(expectedException);
 		assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -198,9 +183,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		String uri = "/write-json-readerhandle/";
 
 		ObjectMapper mapper = new ObjectMapper();
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write the doc
 		writeDocumentReaderHandle(client, filename, uri, "JSON");
@@ -239,8 +221,7 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentReaderHandle(client, uri + filename, "JSON");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -248,9 +229,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		String expectedException = "Could not read non-existent document";
 		boolean documentIsDeleted = exception.contains(expectedException);
 		assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release the client
-		client.release();
 	}
 
 	//@Test Issue 225 	
@@ -261,8 +239,6 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		System.out.println("Running testBinaryCRUD");
 
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		writeDocumentReaderHandle(client, filename, uri, "Binary");	
 
 		// read docs
@@ -276,8 +252,7 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		//long expectedSize = 17031;
 
 		boolean expectedSize;
-		if(size >= 16800 && size <= 17200)
-		{
+		if(size >= 16800 && size <= 17200) {
 			expectedSize = true;
 			assertTrue("Binary size difference", expectedSize);
 		}
@@ -297,8 +272,7 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		long sizeUpdate = convertReaderToString(fileReadUpdate).length();
 
 		boolean expectedSizeUpdate;
-		if(sizeUpdate >= 55000 && sizeUpdate <= 57000)
-		{
+		if(sizeUpdate >= 55000 && sizeUpdate <= 57000) {
 			expectedSizeUpdate = true;
 			assertTrue("Binary size difference", expectedSizeUpdate);
 		}
@@ -308,8 +282,7 @@ public class TestReaderHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try	{
 			readDocumentReaderHandle(client, uri + filename, "Binary");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -317,13 +290,13 @@ public class TestReaderHandle extends BasicJavaClientREST {
 		String expectedException = "com.marklogic.client.ResourceNotFoundException: Local message: Could not read non-existent document. Server Message: RESTAPI-NODOCUMENT: (err:FOER0000) Resource or document does not exist:  category: content message: /write-bin-filehandle/Pandakarlino.jpg";
 		assertEquals("Document is not deleted", expectedException, exception);
 
-		// release client
-		client.release();
 	}
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release the client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

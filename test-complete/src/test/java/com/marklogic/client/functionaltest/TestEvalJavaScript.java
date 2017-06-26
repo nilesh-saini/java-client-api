@@ -30,9 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -42,8 +40,6 @@ import org.xml.sax.InputSource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.eval.EvalResult;
 import com.marklogic.client.eval.EvalResult.Type;
@@ -66,36 +62,26 @@ import com.marklogic.client.io.JacksonHandle;
 public class TestEvalJavaScript  extends BasicJavaClientREST {
 	private static String dbName = "TestEvalJavaScriptDB";
 	private static String [] fNames = {"TestEvalJavaScriptDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		 System.out.println("In setup");
 		 configureRESTServer(dbName, fNames, false);
  	     TestEvalXquery.createUserRolesWithPrevilages("test-js-eval", "xdbc:eval", "xdbc:eval-in","xdmp:eval-in","xdmp:invoke-in","xdmp:invoke","xdbc:invoke-in","any-uri","xdbc:invoke");
- 	     TestEvalXquery.createRESTUser("eval-user", "x", "test-js-eval");		 
+ 	     TestEvalXquery.createRESTUser("eval-user", "x", "test-js-eval");
+ 	     int restPort = getRestServerPort();
+ 	     String hostname = getRestServerHostName();
+		 client = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName,"eval-user", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
 		TestEvalXquery.deleteRESTUser("eval-user");
 		TestEvalXquery.deleteUserRole("test-js-eval");
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		int restPort = getRestServerPort();
-		client = getDatabaseClientOnDatabase("localhost", restPort, dbName,"eval-user", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running CleanUp script");	
-    	// release client
+		// release client
     	client.release();
 	}
 	
@@ -548,7 +534,8 @@ public class TestEvalJavaScript  extends BasicJavaClientREST {
 		InputStream inputStream = null;
 		int restPort = getRestServerPort();
 		String restServerName = getRestServerName();
-		DatabaseClient moduleClient = getDatabaseClientOnDatabase("localhost", restPort, (restServerName + "-modules"), "admin", "admin", Authentication.DIGEST);
+		String hostname = getRestServerHostName();
+		DatabaseClient moduleClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, (restServerName + "-modules"), "admin", "admin");
 		try {
 			inputStream = new FileInputStream(
 					"src/test/java/com/marklogic/client/functionaltest/data/javascriptQueries.sjs");

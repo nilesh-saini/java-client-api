@@ -16,7 +16,7 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -25,7 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,18 +32,18 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 public class TestXMLMultiByte extends BasicJavaClientREST {
 
 	private static String dbName = "XMLMultiByteDB";
 	private static String [] fNames = {"XMLMultiByteDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -54,9 +53,6 @@ public class TestXMLMultiByte extends BasicJavaClientREST {
 		String uri = "/write-xml-multibyte/";
 
 		System.out.println("Running testXmlMultibyte");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write docs
 		writeDocumentUsingInputStreamHandle(client, filename, uri, "XML");
@@ -113,14 +109,13 @@ public class TestXMLMultiByte extends BasicJavaClientREST {
 
 		// delete the document
 		deleteDocument(client, uri + filename, "XML");
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

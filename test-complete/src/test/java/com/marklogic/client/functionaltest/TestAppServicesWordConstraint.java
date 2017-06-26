@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
@@ -41,6 +40,7 @@ public class TestAppServicesWordConstraint extends BasicJavaClientREST {
 
 	private static String dbName = "AppServicesWordConstraintDB";
 	private static String [] fNames = {"AppServicesWordConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -48,6 +48,7 @@ public class TestAppServicesWordConstraint extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");	
 	}
 @After
 public  void testCleanUp() throws Exception
@@ -64,11 +65,8 @@ public  void testCleanUp() throws Exception
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "wordConstraintWithElementAndAttributeIndexOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/word-constraint/", "XML");
 		}
 		
@@ -93,14 +91,7 @@ public  void testCleanUp() throws Exception
 		assertXpathEvaluatesTo("Vannevar served", "string(//*[local-name()='result'][3]//*[local-name()='title'])", resultDoc);
 		assertXpathEvaluatesTo("1.23", "string(//*[local-name()='result'][1]//@*[local-name()='amt'])", resultDoc);
 		assertXpathEvaluatesTo("0.12", "string(//*[local-name()='result'][2]//@*[local-name()='amt'])", resultDoc);
-		assertXpathEvaluatesTo("12.34", "string(//*[local-name()='result'][3]//@*[local-name()='amt'])", resultDoc);
-	    
-		//String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-range-query(fn:QName(\"http://purl.org/dc/elements/1.1/\", \"date\"), \"=\", xs:date(\"2006-02-02\"), (), 1), cts:word-query(\"policymaker\", (\"lang=en\"), 1))), (\"score-logtfidf\"), 1))[1 to 10]";
-		
-		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("12.34", "string(//*[local-name()='result'][3]//@*[local-name()='amt'])", resultDoc);	
 	}
 
 @Test
@@ -110,12 +101,9 @@ public  void testCleanUp() throws Exception
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "wordConstraintWithNormalWordQueryOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/word-constraint/", "XML");
 		}
 		
@@ -143,9 +131,6 @@ public  void testCleanUp() throws Exception
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:word-query(\"Memex\", (\"lang=en\"), 1), cts:element-attribute-word-query(fn:QName(\"http://cloudbank.com\",\"price\"), fn:QName(\"\",\"amt\"), \".12\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 
 @Test
@@ -156,11 +141,8 @@ public  void testCleanUp() throws Exception
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "wordConstraintWithTermOptionCaseInsensitiveOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/word-constraint/", "XML");
 		}
 		
@@ -187,16 +169,14 @@ public  void testCleanUp() throws Exception
 	    
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-word-query(fn:QName(\"\",\"title\"), \"for\", (\"case-insensitive\",\"lang=en\"), 1), cts:element-attribute-range-query(fn:QName(\"http://cloudbank.com\",\"price\"), fn:QName(\"\",\"amt\"), \"=\", 0.12, (), 1)), ()), (\"score-logtfidf\",\"faceted\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();	
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

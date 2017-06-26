@@ -34,20 +34,19 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.InputSourceHandle;
 public class TestInputSourceHandle extends BasicJavaClientREST {
-	
-	
+		
 	private static String dbName = "InputSourceHandleDB";
 	private static String [] fNames = {"InputSourceHandleDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
-		System.out.println("In setup");
-		
+		System.out.println("In setup");		
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 	
 	@Test	public void testXmlCRUD() throws KeyManagementException, NoSuchAlgorithmException, IOException,  SAXException, ParserConfigurationException, TransformerException
@@ -56,9 +55,6 @@ public class TestInputSourceHandle extends BasicJavaClientREST {
 		String uri = "/write-xml-inputsourcehandle/";
 		
 		System.out.println("Running testXmlCRUD");
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// write docs
 		 writeDocumentUsingInputStreamHandle(client, filename, uri, "XML");
@@ -106,8 +102,7 @@ public class TestInputSourceHandle extends BasicJavaClientREST {
 	    
 		// read the deleted document
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "XML");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
@@ -115,15 +110,16 @@ public class TestInputSourceHandle extends BasicJavaClientREST {
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
 	    
-		// release client
 	    contentHandle.close();
-		updateHandle.close();
-		client.release();	
+		updateHandle.close();			
 	}
+	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

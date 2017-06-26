@@ -25,16 +25,13 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.pojo.PojoPage;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -46,33 +43,24 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 
 	private static String dbName = "TestPOJOQueryBuilderGeoQuerySearchDB";
 	private static String [] fNames = {"TestPOJOQueryBuilderGeoQuerySearchDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
-		createAutomaticGeoIndex();		
+		createAutomaticGeoIndex();
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-	@After
-	public void tearDown() throws Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
-
+		cleanupRESTServer(dbName, fNames);
 	}
-	
+		
 //	public static class SpecialGeoArtifact {
 //		    
 //		public String name;
@@ -195,9 +183,9 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 
 		GeoSpecialArtifact cogs = new GeoSpecialArtifact();
 		cogs.setId(counter);
-		if( counter % 5 == 0){
+		if( counter % 5 == 0) {
 			cogs.setName("Cogs special");
-			if(counter % 2 ==0){
+			if(counter % 2 ==0) {
 				GeoCompany acme = new GeoCompany();
 				acme.setName("Acme special, Inc.");
 				acme.setState("Reno");
@@ -206,7 +194,7 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 				acme.setLatLongPoint("39.5272 119.8219");
 				cogs.setManufacturer(acme);
 
-			}else{
+			} else {
 				GeoCompany widgets = new GeoCompany();
 				widgets.setName("Widgets counter Inc.");
 				widgets.setState("Las Vegas");
@@ -215,9 +203,9 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 				widgets.setLatLongPoint("36.1215 115.1739");
 				cogs.setManufacturer(widgets);
 			}
-		}else{
+		} else {
 			cogs.setName("Cogs "+counter);
-			if(counter % 2 ==0){
+			if(counter % 2 ==0) {
 				GeoCompany acme = new GeoCompany();
 				acme.setName("Acme "+counter+", Inc.");
 				acme.setState("Los Angles");
@@ -226,7 +214,7 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 				acme.setLatLongPoint("34.0500 118.2500");
 				cogs.setManufacturer(acme);
 
-			}else{
+			} else {
 				GeoCompany widgets = new GeoCompany();
 				widgets.setName("Widgets "+counter+", Inc.");
 				widgets.setState("San Fransisco");
@@ -239,16 +227,18 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 		cogs.setInventory(1000+counter);
 		return cogs;
 	}
+	
 	public void validateArtifact(GeoSpecialArtifact art)
 	{
 		assertNotNull("Artifact object should never be Null",art);
 		assertNotNull("Id should never be Null",art.id);
 		assertTrue("Inventry is always greater than 1000", art.getInventory()>1000);
 	}
+	
 	public void loadSimplePojos(PojoRepository products)
 	{
-		for(int i=1;i<111;i++){
-			if(i%2==0){
+		for(int i=1;i<111;i++) {
+			if(i%2==0) {
 				products.write(this.getGeoArtifact(i),"even","numbers");
 			}
 			else {
@@ -278,10 +268,10 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 		System.out.println(jh.get().toString());
 		
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				GeoSpecialArtifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -290,13 +280,13 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		assertEquals("page number after the loop",3,p.getPageNumber());
 		assertEquals("total no of pages",3,p.getTotalPages());
 		assertEquals("page length from search handle",5,jh.get().path("page-length").asInt());
 		assertEquals("Total results from search handle",11,jh.get().path("total").asInt());
-	
 	}
+	
    // This test is to verify GeoProperty query works fine
 	@Test
 	public void testPOJOGeoQuerySearchWithGeoProperty() {
@@ -314,10 +304,10 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 		System.out.println(jh.get().toString());
 	
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				GeoSpecialArtifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -326,9 +316,8 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		assertEquals("Total results from search handle",5,jh.get().path("results").size());
-	
 	}
 
 	//This test is to verify GeoPath query works fine, 
@@ -351,10 +340,10 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 			System.out.println(jh.get().toString());
 			
 			long pageNo=1,count=0;
-			do{
+			do {
 				count =0;
 				p = products.search(qd,pageNo);
-				while(p.hasNext()){
+				while(p.hasNext()) {
 					GeoSpecialArtifact a =p.next();
 					validateArtifact(a);
 					assertTrue("Verifying document id is part of the search ids",a.getId()%2==0);
@@ -363,11 +352,10 @@ public class TestPOJOQueryBuilderGeoQueries extends BasicJavaClientREST {
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
-			}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+			} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 			assertEquals("page number after the loop",3,p.getPageNumber());
 			assertEquals("total no of pages",3,p.getTotalPages());
 			assertEquals("page length from search handle",15,jh.get().path("page-length").asInt());
-			assertEquals("Total results from search handle",44,jh.get().path("total").asInt());
-		
+			assertEquals("Total results from search handle",44,jh.get().path("total").asInt());		
 		}
 }

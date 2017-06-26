@@ -63,27 +63,15 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-//import sun.java2d.loops.XorPixelWriter.ByteData;
-
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.io.Format;
-import com.marklogic.client.query.QueryManager;
-import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.Transaction;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
-import com.marklogic.client.query.MatchDocumentSummary;
-import com.marklogic.client.query.MatchLocation;
-import com.marklogic.client.query.StringQueryDefinition;
+import com.marklogic.client.admin.QueryOptionsManager;
+import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -91,6 +79,7 @@ import com.marklogic.client.io.DocumentMetadataHandle.DocumentCollections;
 import com.marklogic.client.io.DocumentMetadataHandle.DocumentPermissions;
 import com.marklogic.client.io.DocumentMetadataHandle.DocumentProperties;
 import com.marklogic.client.io.FileHandle;
+import com.marklogic.client.io.Format;
 import com.marklogic.client.io.InputSourceHandle;
 import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.JAXBHandle;
@@ -102,6 +91,13 @@ import com.marklogic.client.io.SourceHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.XMLEventReaderHandle;
 import com.marklogic.client.io.XMLStreamReaderHandle;
+import com.marklogic.client.query.MatchDocumentSummary;
+import com.marklogic.client.query.MatchLocation;
+import com.marklogic.client.query.QueryManager;
+import com.marklogic.client.query.StringQueryDefinition;
+//import sun.java2d.loops.XorPixelWriter.ByteData;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 
 public abstract class BasicJavaClientREST extends ConnectedRESTQA
 {
@@ -1743,7 +1739,7 @@ return readContent;
 	public void loadGeoData() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
 		//DatabaseClient client = DatabaseClientFactory.newClient("localhost", 8011, "rest-admin", "x", Authentication.DIGEST);
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		DatabaseClient client = getDatabaseClientWithDigest("rest-admin", "x");
 		
 		// write docs
 		for(int i = 1; i <= 24; i++)

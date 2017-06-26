@@ -30,9 +30,7 @@ import java.util.Calendar;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -41,7 +39,6 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
@@ -74,27 +71,14 @@ public class TestBulkReadWriteWithJacksonParserHandle extends
 	private static String dbName = "TestBulkJacksonParserDB";
 	private static String[] fNames = { "TestBulkJacksonParserDB-1" };
 	
-	
-	private DatabaseClient client;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");		
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
-	}
-
-	@Before
-	public void testSetup() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void testCleanUp() throws Exception {
-		System.out.println("Running CleanUp script");
-		// release client
-		client.release();
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	public DocumentMetadataHandle setMetadata() {
@@ -132,10 +116,7 @@ public class TestBulkReadWriteWithJacksonParserHandle extends
 		System.out.println(actualPermissions);
 
 		assertTrue("Document permissions difference in size value",
-				actualPermissions.contains("size:3"));
-		//assertTrue(
-		//		"Document permissions difference in flexrep-eval permission",
-		//		actualPermissions.contains("flexrep-eval:[READ]"));
+				actualPermissions.contains("size:3"));		
 		assertTrue("Document permissions difference in rest-reader permission",
 				actualPermissions.contains("rest-reader:[READ]"));
 		assertTrue("Document permissions difference in rest-writer permission",
@@ -172,8 +153,7 @@ public class TestBulkReadWriteWithJacksonParserHandle extends
 		// Permissions	    
 		String actualPermissions = getDocumentPermissionsString(permissions);
 
-		assertTrue("Document permissions difference in size value", actualPermissions.contains("size:2"));
-		//assertTrue("Document permissions difference in flexrep-eval permission", actualPermissions.contains("flexrep-eval:[READ]"));
+		assertTrue("Document permissions difference in size value", actualPermissions.contains("size:2"));		
 		assertTrue("Document permissions difference in rest-reader permission", actualPermissions.contains("rest-reader:[READ]"));
 		assertTrue("Document permissions difference in rest-writer permission", actualPermissions.contains("rest-writer:[UPDATE]"));
 
@@ -603,6 +583,8 @@ public class TestBulkReadWriteWithJacksonParserHandle extends
 	@AfterClass
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 

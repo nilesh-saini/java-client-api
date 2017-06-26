@@ -62,7 +62,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.BasicAuthContext;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.DatabaseClientFactory.SSLHostnameVerifier;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -2293,23 +2294,61 @@ public abstract class DmsdkConnectedRESTQA {
 		return bSecurityEnabled;
 	}
 
-	public static DatabaseClient getDatabaseClient() throws KeyManagementException, NoSuchAlgorithmException, IOException
-	{			
-		DatabaseClient client = DatabaseClientFactory.newClient(getServer(), getRestServerPort());
+	public static DatabaseClient getDatabaseClient() throws KeyManagementException, NoSuchAlgorithmException, IOException {			
+		DatabaseClient client = DatabaseClientFactory.newClient(getServer(), getRestServerPort());		
 		return client; 		
 	}
-
-	public static DatabaseClient getDatabaseClient(String user, String password, Authentication authType) throws KeyManagementException, NoSuchAlgorithmException, IOException
+	
+	public static DatabaseClient getDatabaseClientWithDigest(String user, String password) throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{	
 		DatabaseClient client = null;
 		try {			
 			   SSLContext sslcontext = null;
-			   if 	(IsSecurityEnabled()) {
+			   if (IsSecurityEnabled()) {
 				sslcontext = getSslContext();
-				 client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), user, password, authType, sslcontext, SSLHostnameVerifier.ANY);
+				 client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), 
+						                        new DigestAuthContext(user, password).withSSLContext(sslcontext)
+						                        .withSSLHostnameVerifier(SSLHostnameVerifier.ANY));
+			  }
+			  else ;
+			    client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), new DigestAuthContext(user, password));
+		} catch (CertificateException certEx) {
+			// TODO Auto-generated catch block
+			certEx.printStackTrace();
+		}
+		catch (KeyStoreException ksEx) {
+			// TODO Auto-generated catch block
+			ksEx.printStackTrace();
+		}
+		catch (UnrecoverableKeyException unReovkeyEx) {
+			// TODO Auto-generated catch block
+			unReovkeyEx.printStackTrace();
+		} 
+		return client;
+	}
+	
+	/*
+	 * To provide DatabaseClient instance in the following cases.
+	 * Access a specific database on non uber port i.e., 8012
+	 * Access a specific database through uber server on port (specifically port 8000)
+	 */
+	public static DatabaseClient getDatabaseClientOnDatabaseWithDigest(String hostName, int port, String databaseName, String user, String password) throws KeyManagementException, NoSuchAlgorithmException, IOException
+	{	
+		DatabaseClient client = null;		
+		try {			
+			SSLContext sslcontext = null;
+			// Enable secure access on non 8000 port. Uber servers on port 8000 aren't security enabled as of now.
+			if (IsSecurityEnabled() && port != 8000) {
+				sslcontext = getSslContext();
+				if (hostName.equalsIgnoreCase("localhost"))
+						hostName = getSslServer();
+				client = DatabaseClientFactory.newClient(hostName, port, databaseName, new DigestAuthContext(user, password).withSSLContext(sslcontext)
+                        .withSSLHostnameVerifier(SSLHostnameVerifier.ANY));
 			}
 			else {
-				client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), user, password, authType);
+				if (hostName.equalsIgnoreCase("localhost"))
+					hostName = getServer();
+				client = DatabaseClientFactory.newClient(hostName, port, databaseName, new DigestAuthContext(user, password));
 			}
 		} catch (CertificateException certEx) {
 			// TODO Auto-generated catch block
@@ -2328,10 +2367,10 @@ public abstract class DmsdkConnectedRESTQA {
 	
 	/*
 	 * To provide DatabaseClient instance in the following cases.
-	 * Access a specific database on non uber port i.e., 8000
+	 * Access a specific database on non uber port i.e., 8012
 	 * Access a specific database through uber server on port (specifically port 8000)
 	 */
-	public DatabaseClient getDatabaseClientOnDatabase(String hostName, int port, String databaseName, String user, String password, Authentication authType) throws KeyManagementException, NoSuchAlgorithmException, IOException
+	public static DatabaseClient getDatabaseClientOnDatabaseWithBasic(String hostName, int port, String databaseName, String user, String password) throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{	
 		DatabaseClient client = null;		
 		try {			
@@ -2339,10 +2378,15 @@ public abstract class DmsdkConnectedRESTQA {
 			// Enable secure access on non 8000 port. Uber servers on port 8000 aren't security enabled as of now.
 			if (IsSecurityEnabled() && port != 8000) {
 				sslcontext = getSslContext();
-				client= DatabaseClientFactory.newClient(hostName, port, databaseName, user, password, authType, sslcontext, SSLHostnameVerifier.ANY);
+				if (hostName.equalsIgnoreCase("localhost"))
+						hostName = getSslServer();
+				client = DatabaseClientFactory.newClient(hostName, port, databaseName, new BasicAuthContext(user, password).withSSLContext(sslcontext)
+                        .withSSLHostnameVerifier(SSLHostnameVerifier.ANY));
 			}
 			else {
-				client = DatabaseClientFactory.newClient(hostName, port, databaseName, user, password, authType);
+				if (hostName.equalsIgnoreCase("localhost"))
+					hostName = getServer();
+				client = DatabaseClientFactory.newClient(hostName, port, databaseName, new BasicAuthContext(user, password));
 			}
 		} catch (CertificateException certEx) {
 			// TODO Auto-generated catch block

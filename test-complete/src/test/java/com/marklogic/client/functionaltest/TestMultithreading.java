@@ -29,17 +29,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.TextDocumentManager;
 public class TestMultithreading extends BasicJavaClientREST {
 
 	private static String dbName = "TestMultithreadingDB";
 	private static String [] fNames = {"TestMultithreadingDBDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-reader", "x");
 	}
 
 	@After
@@ -60,7 +61,6 @@ public class TestMultithreading extends BasicJavaClientREST {
 		t2.start(); // this will start thread of object 2
 		t2.join();
 
-		DatabaseClient client = getDatabaseClient("rest-reader", "x", Authentication.DIGEST);
 		TextDocumentManager docMgr = client.newTextDocumentManager();
 
 		for (int i = 1; i <= 5; i++) {
@@ -74,9 +74,6 @@ public class TestMultithreading extends BasicJavaClientREST {
 			String docUri = docMgr.exists("/multithread-content-B/filename" + i + ".txt").getUri();
 			assertEquals("URI is not found", expectedUri, docUri);
 		}
-
-		// release client
-		client.release();
 	}
 
 	@Test
@@ -119,6 +116,8 @@ public class TestMultithreading extends BasicJavaClientREST {
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

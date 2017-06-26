@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.ExtensionMetadata.ScriptLanguage;
 import com.marklogic.client.admin.MethodType;
@@ -51,7 +50,7 @@ public class TestJSResourceExtensions extends BasicJavaClientREST {
 	private static String dbName = "TestJSResourceExtensionDB";
 	private static String [] fNames = {"TestResourceExtensionDB-1"};
 	
-	private  DatabaseClient client ;
+	private  DatabaseClient client;
 	ResourceExtensionsManager resourceMgr;
 
 	static public class TestJSExtension extends ResourceManager {
@@ -150,7 +149,7 @@ public class TestJSResourceExtensions extends BasicJavaClientREST {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("eval-user");
 		deleteUserRole("test-eval");
@@ -160,7 +159,8 @@ public class TestJSResourceExtensions extends BasicJavaClientREST {
 	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		
 		int restPort = getRestServerPort();
-		client = getDatabaseClientOnDatabase("localhost", restPort, dbName, "eval-user", "x", Authentication.DIGEST);
+		String hostname = getRestServerHostName();
+		client = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-user", "x");
 		resourceMgr = client.newServerConfigManager().newResourceExtensionsManager();
 		ExtensionMetadata resextMetadata = new ExtensionMetadata();
 		resextMetadata.setTitle("BasicJSTest");

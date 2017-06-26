@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
@@ -47,6 +46,7 @@ public class TestBug18801 extends BasicJavaClientREST {
 
 	private static String dbName = "Bug18801DB";
 	private static String [] fNames = {"Bug18801DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -56,6 +56,7 @@ public class TestBug18801 extends BasicJavaClientREST {
 	  waitForServerRestart();
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -64,9 +65,7 @@ public void testDefaultFacetValue() throws KeyManagementException, NoSuchAlgorit
 	System.out.println("Running testDefaultFacetValue");
 	
 	String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-	DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-			
+		
 	// set query option validation to true
 	ServerConfigurationManager srvMgr = client.newServerConfigManager();
 	srvMgr.readConfiguration();
@@ -74,8 +73,7 @@ public void testDefaultFacetValue() throws KeyManagementException, NoSuchAlgorit
 	srvMgr.writeConfiguration();
 	
 	// write docs
-	for(String filename : filenames)
-	{
+	for(String filename : filenames) {
 		writeDocumentUsingInputStreamHandle(client, filename, "/def-facet/", "XML");
 	}
 
@@ -117,15 +115,14 @@ public void testDefaultFacetValue() throws KeyManagementException, NoSuchAlgorit
  	//System.out.println(convertXMLDocumentToString(resultDoc)); 
  	
  	assertXpathEvaluatesTo("pop", "string(//*[local-name()='response']//*[local-name()='facet']//@*[local-name()='name'])", resultDoc);
- 	assertXpathEvaluatesTo("3", "string(//*[local-name()='response']//*[local-name()='facet']/*[local-name()='facet-value']//@*[local-name()='count'])", resultDoc);
- 	
-	// release client
-	client.release();		
+ 	assertXpathEvaluatesTo("3", "string(//*[local-name()='response']//*[local-name()='facet']/*[local-name()='facet-value']//@*[local-name()='count'])", resultDoc);		
 }
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);	
 	}
 }

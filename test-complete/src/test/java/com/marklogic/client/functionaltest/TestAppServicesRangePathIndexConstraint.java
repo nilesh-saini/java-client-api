@@ -34,7 +34,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.StringHandle;
@@ -47,12 +46,14 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 
 	private static String dbName = "AppServicesPathIndexConstraintDB";
 	private static String [] fNames = {"AppServicesPathIndexConstraintDB-1"};
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");	
 	}
 	
 	@After
@@ -69,8 +70,6 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 
 		String[] filenames = {"pathindex1.xml", "pathindex2.xml"};
 		String queryOptionName = "pathIndexConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -96,16 +95,11 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 		assertXpathEvaluatesTo("/path-index-constraint/pathindex1.xml", "string(//*[local-name()='result'][1]//@*[local-name()='uri'])", resultDoc);
 		assertXpathEvaluatesTo("/path-index-constraint/pathindex2.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);
 
-		// release client
-		client.release();
-
 		// ***********************************************
 		// *** Running test path index with constraint ***
 		// ***********************************************
 
 		System.out.println("Running testPathIndexWithConstraint");
-
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -115,8 +109,7 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 		// create query options manager
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
 
-		// create query options handle
-		//QueryOptionsHandle handle = new QueryOptionsHandle();
+		// create query options handle		
 		String xmlOptions = "<search:options xmlns:search='http://marklogic.com/appservices/search'>" +
 				"<search:constraint name='lastname'>" +
 				"<search:word>" +
@@ -155,9 +148,6 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/path-index-constraint/pathindex1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
 
-		// release client
-		client.release();
-
 		// ***********************************************
 		// *** Running test path index on int ***
 		// ***********************************************
@@ -165,8 +155,6 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 		System.out.println("Running testPathIndexOnInt");
 
 		String[] filenames2 = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames2) {
@@ -213,15 +201,14 @@ public class TestAppServicesRangePathIndexConstraint extends BasicJavaClientREST
 		resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/path-index-constraint/constraint1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/path-index-constraint/constraint1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);	
 	}
 
 	@AfterClass
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

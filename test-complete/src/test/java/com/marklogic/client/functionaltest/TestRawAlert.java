@@ -38,7 +38,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.TransformExtensionsManager;
 import com.marklogic.client.alerting.RuleDefinition;
 import com.marklogic.client.alerting.RuleDefinitionList;
@@ -56,15 +55,15 @@ import com.marklogic.client.query.StructuredQueryDefinition;
 public class TestRawAlert extends BasicJavaClientREST {
 	private static String dbName = "TestRawAlertDB";
 	private static String [] fNames = {"TestRawAlertDB-1"};
+	private static DatabaseClient client = null;
 	
-	
-
 	@BeforeClass	
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -81,11 +80,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -121,8 +117,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria "+criteria+" matched rule "+
@@ -134,10 +129,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		assertTrue("incorrect rule", expected.contains("RULE-TEST-1 - {rule-number=one} |"));
-
-		// release client
-		client.release();		
+		assertTrue("incorrect rule", expected.contains("RULE-TEST-1 - {rule-number=one} |"));		
 	}
 
 	@Test	
@@ -147,11 +139,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -183,10 +172,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(matchedRules.size());
 
-		assertEquals("incorrect matching rule", 0, matchedRules.size());
-
-		// release client
-		client.release();		
+		assertEquals("incorrect matching rule", 0, matchedRules.size());	
 	}
 
 	@Test	
@@ -196,11 +182,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -242,8 +225,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria "+criteria+" matched rule "+
@@ -254,10 +236,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		assertTrue("incorrect rules", expected.contains("RULE-TEST-1 - {rule-number=one}")&& expected.contains("RULE-TEST-2 - {rule-number=two}"));
-
-		// release client
-		client.release();		
+		assertTrue("incorrect rules", expected.contains("RULE-TEST-1 - {rule-number=one}")&& expected.contains("RULE-TEST-2 - {rule-number=two}"));		
 	}
 
 	@Test	
@@ -267,11 +246,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -289,20 +265,15 @@ public class TestRawAlert extends BasicJavaClientREST {
 		String exception = "";
 
 		// write the rule to the database
-		try
-		{
+		try {
 			ruleMgr.writeRule("RULE-TEST-A", ruleHandle1); // test case for non-matching rule name
-		} catch(Exception e)
-		{
+		} catch(Exception e) {
 			exception = e.toString();
 		}
 
 		String expectedException = "Invalid content: If provided, rule name in payload must match rule name in URL";
 
-		assertTrue("Exception is not thrown", exception.contains(expectedException));
-
-		// release client
-		client.release();		
+		assertTrue("Exception is not thrown", exception.contains(expectedException));	
 	}
 
 	@Test	
@@ -312,11 +283,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -331,8 +299,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 		// create a handle for the rule
 		StringHandle ruleHandle = new StringHandle(ruleInJson);
 		ruleHandle.setFormat(Format.JSON);
-		//FileHandle writeHandle = new FileHandle(file);
-
+		
 		// write the rule to the database
 		ruleMgr.writeRule("RULE-TEST-1-JSON", ruleHandle);
 
@@ -360,8 +327,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria matched rule "+
@@ -372,10 +338,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		assertTrue("rule is not correct", expected.contains("RULE-TEST-1-JSON - {{http://marklogic.com/rest-api}rule-number=one json}"));
-
-		// release client
-		client.release();		
+		assertTrue("rule is not correct", expected.contains("RULE-TEST-1-JSON - {{http://marklogic.com/rest-api}rule-number=one json}"));		
 	}
 
 	@Test	
@@ -385,11 +348,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -424,17 +384,13 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria matched rule "+
 							rule.getName()+" with metadata "+rule.getMetadata()
 					);
-		}
-
-		// release client
-		client.release();		
+		}	
 	}
 
 	@Test	
@@ -444,11 +400,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -489,17 +442,13 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria matched rule "+
 							rule.getName()+" with metadata "+rule.getMetadata()
 					);
-		}
-
-		// release client
-		client.release();		
+		}	
 	}
 
 	@Test	
@@ -509,11 +458,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -573,8 +519,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria "+criteria+" matched rule "+
@@ -585,21 +530,15 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		if(expected.equals("RULE-TEST-3 - {rule-number=three} | RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json} | "))
-		{
+		if(expected.equals("RULE-TEST-3 - {rule-number=three} | RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json} | ")) {
 			assertTrue("rule is incorrect", expected.contains("RULE-TEST-3 - {rule-number=three} | RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json}"));
 		}
-		else if(expected.equals("RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json} | RULE-TEST-3 - {rule-number=three} | "))
-		{
+		else if(expected.equals("RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json} | RULE-TEST-3 - {rule-number=three} | ")) {
 			assertTrue("rule is incorrect", expected.contains("RULE-TEST-3-JSON - {{http://marklogic.com/rest-api}rule-number=three json} | RULE-TEST-3 - {rule-number=three}"));
 		}
-		else
-		{
+		else {
 			assertTrue("there is no matching rule", false);
-		}
-
-		// release client
-		client.release();		
+		}		
 	}
 
 	@Test	
@@ -609,11 +548,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -670,10 +606,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(matchedRules.size());
 
-		assertEquals("match rule is incorrect", 0, matchedRules.size());
-
-		// release client
-		client.release();		
+		assertEquals("match rule is incorrect", 0, matchedRules.size());	
 	}
 
 	@Test	
@@ -682,12 +615,9 @@ public class TestRawAlert extends BasicJavaClientREST {
 		System.out.println("Running testRawAlertDocUris");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -697,10 +627,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 		// get the rule
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/rules/alertRule1.xml");
 
-		//String combinedQuery = convertFileToString(file);
-
-		// create a handle for the rule
-		//StringHandle rawHandle = new StringHandle(combinedQuery);
+		// create a handle for the rule		
 		FileHandle writeHandle = new FileHandle(file);
 
 		// write the rule to the database
@@ -725,8 +652,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria matched rule "+
@@ -737,10 +663,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		assertTrue("rule is incorrect", expected.contains("RULE-TEST-1 - {rule-number=one}"));
-
-		// release client
-		client.release();		
+		assertTrue("rule is incorrect", expected.contains("RULE-TEST-1 - {rule-number=one}"));	
 	}
 
 	@Test	
@@ -750,11 +673,8 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-alert/", "XML");
 		}
 
@@ -789,8 +709,7 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		// iterate over the matched rules
 		Iterator<RuleDefinition> ruleItr = matchedRules.iterator();
-		while (ruleItr.hasNext()) 
-		{
+		while (ruleItr.hasNext()) {
 			RuleDefinition rule = ruleItr.next();
 			System.out.println(
 					"document criteria matched rule "+
@@ -801,17 +720,15 @@ public class TestRawAlert extends BasicJavaClientREST {
 
 		System.out.println(expected);
 
-		assertTrue("rule is incorrect", expected.contains("RULE-TEST-2 - {rule-number=two}"));
-
-		// release client
-		client.release();		
+		assertTrue("rule is incorrect", expected.contains("RULE-TEST-2 - {rule-number=two}"));	
 	}
-
 
 	@AfterClass	
 	public static  void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

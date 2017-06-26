@@ -25,9 +25,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -35,7 +33,6 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
@@ -60,30 +57,18 @@ public class TestBulkReadWriteWithJacksonHandle extends BasicJavaClientREST  {
 	private static String dbName = "TestBulkReadWriteWithJacksonHandleDB";
 	private static String [] fNames = {"TestBulkReadWriteWithJacksonHandleDB-1"};
 	
+	private static DatabaseClient client = null;
 	
-	private  DatabaseClient client ;
 	@BeforeClass
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
-		setupAppServicesConstraint(dbName);	  
-
-	}
-
-	@Before  public void testSetup() throws KeyManagementException, NoSuchAlgorithmException, Exception
-	{
+		setupAppServicesConstraint(dbName);
 		// create new connection for each test below
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
-	@After
-	public  void testCleanUp() throws Exception
-	{
-		System.out.println("Running CleanUp script");	
-		// release client
-		client.release();   	
-	}
-
+	
 	public DocumentMetadataHandle setMetadata(){
 		// create and initialize a handle on the meta-data
 		DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
@@ -453,7 +438,9 @@ public class TestBulkReadWriteWithJacksonHandle extends BasicJavaClientREST  {
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 

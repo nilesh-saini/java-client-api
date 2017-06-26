@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.DeleteListener;
 import com.marklogic.client.datamovement.ExportListener;
@@ -76,7 +77,7 @@ public class ExportListenerTest extends  DmsdkJavaClientREST {
 
 		associateRESTServerWithDB(server,dbName);
 
-		dbClient = DatabaseClientFactory.newClient(host, port, user, password, Authentication.DIGEST);
+		dbClient = DatabaseClientFactory.newClient(host, port, new DigestAuthContext(user, password));
 		dmManager = dbClient.newDataMovementManager();
 
 		clusterInfo = ((DatabaseClientImpl) dbClient).getServices()
@@ -86,6 +87,7 @@ public class ExportListenerTest extends  DmsdkJavaClientREST {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		dbClient.release();
 		associateRESTServerWithDB(server,"Documents");
 		for (int i =0 ; i < clusterInfo.size(); i++){
 			System.out.println(dbName+"-"+(i+1));

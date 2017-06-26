@@ -123,7 +123,7 @@ public class TestOpticOnMixedViews extends BasicJavaClientREST {
 		DatabaseClient schemaDBclient = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), schemadbName, new DigestAuthContext("admin", "admin"));
 				
 		//You can enable the triple positions index for faster near searches using cts:triple-range-query.		
-		client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), new DigestAuthContext("admin", "admin") );
+		client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), new DigestAuthContext("admin", "admin"));
 		
 		// Install the TDE templates
 		// loadFileToDB(client, filename, docURI, collection, document format)

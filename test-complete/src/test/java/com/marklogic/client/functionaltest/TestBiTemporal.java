@@ -34,7 +34,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,8 +45,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.TransformExtensionsManager;
@@ -174,15 +171,18 @@ public class TestBiTemporal extends BasicJavaClientREST {
     		                      "xdbc:invoke","temporal:statement-set-system-time");
     createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader", "temporal-admin");
     int restPort = getRestServerPort();
-    adminClient = getDatabaseClientOnDatabase("localhost", restPort, dbName, "rest-admin", "x", Authentication.DIGEST);
-    writerClient = getDatabaseClientOnDatabase("localhost", restPort, dbName, "eval-user", "x", Authentication.DIGEST);
-    readerClient = getDatabaseClientOnDatabase("localhost", restPort, dbName, "rest-reader", "x", Authentication.DIGEST);             
+	String hostname = getRestServerHostName();
+    adminClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "rest-admin", "x");
+    writerClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-user", "x");
+    readerClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "rest-reader", "x");             
   }
 
   @After
   public void tearDown() throws Exception {
     clearDB();
     adminClient.release();
+    writerClient.release();
+    readerClient.release();
   }
 
   public DocumentMetadataHandle setMetadata(boolean update) {

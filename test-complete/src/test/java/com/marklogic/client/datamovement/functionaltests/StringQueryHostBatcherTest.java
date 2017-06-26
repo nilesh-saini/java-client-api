@@ -56,6 +56,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.admin.ServerConfigurationManager;
@@ -126,10 +127,10 @@ public class StringQueryHostBatcherTest extends  DmsdkJavaClientREST {
 	    createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader","rest-extension-user","manage-user");
 	    
 	    // For use with Java/REST Client API
-	    client = DatabaseClientFactory.newClient(restServerHost, restServerPort, "admin", "admin", Authentication.DIGEST);
+	    client = DatabaseClientFactory.newClient(restServerHost, restServerPort, new DigestAuthContext("admin", "admin"));
 	    dmManager = client.newDataMovementManager();
 	    // For use with QueryHostBatcher
-	    clientQHB = DatabaseClientFactory.newClient(restServerHost, restServerPort, "eval-user", "x", Authentication.DIGEST);	   
+	    clientQHB = DatabaseClientFactory.newClient(restServerHost, restServerPort, new DigestAuthContext("eval-user", "x"));	   
 	    moveMgr = clientQHB.newDataMovementManager();
 	   
 	}

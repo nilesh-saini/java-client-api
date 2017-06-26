@@ -38,7 +38,6 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.document.JSONDocumentManager;
@@ -59,7 +58,7 @@ public class TestDoublePrecisionGeoOps extends BasicJavaClientREST {
 	private static String [] fNames = {"TestDoublePrecisionGeoOps-1"};
 	private static String datasource = "src/test/java/com/marklogic/client/functionaltest/data/geodouble/";
 	
-	static DatabaseClient client = null;
+	private static DatabaseClient client = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
@@ -80,7 +79,7 @@ public class TestDoublePrecisionGeoOps extends BasicJavaClientREST {
 		String[] jsonFiles = {"Tropic-of-Capricorn-json.json", "Tropic-of-Cancer-json.json", "South-Pole-json.json", "South-More-json.json", "South-East-json.json",
 	             "Prime-Meridian-json.json", "North-West-json.json", "North-Pole-json.json", "International-Date-Line-json.json", "Equator-json.json" };
 		
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 		
 		// write docs
 		for(String filename : xmlFiles) {

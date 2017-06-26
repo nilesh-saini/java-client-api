@@ -26,14 +26,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.TextDocumentManager;
 import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.StringHandle;
 
 public class TestBug26248 extends BasicJavaClientREST {
-	DatabaseClient client ;
+	DatabaseClient client;
+	
 	@Before
 	public void setUp() throws Exception {
 		loadGradleProperties();
@@ -78,14 +77,13 @@ public class TestBug26248 extends BasicJavaClientREST {
 		   System.out.println("finished "+id);
 		  }
 		 }
-	 
-		
+	 		
 	@Test
 	public void testBug26248() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		try{ 
+		try { 
 		DocWriter.isResendable = false;
 		
-		client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 		  DocWriter dw0 = new DocWriter(client, "/tmp/test0.txt", "The zeroth text");
 		  DocWriter dw1 = new DocWriter(client, "/tmp/test1.txt", "The first text");
 		  DocWriter dw2 = new DocWriter(client, "/tmp/test2.txt", "The second text");
@@ -101,5 +99,4 @@ public class TestBug26248 extends BasicJavaClientREST {
 			throw e;
 		}
 	}
-
 }

@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.SearchHandle;
@@ -42,7 +41,7 @@ public class TestSearchMultipleForests extends BasicJavaClientREST {
 
 	private static String dbName = "TestSearchMultipleForestsDB";
 	private static String [] fNames = {"TestSearchMultipleForestsDB-1", "TestSearchMultipleForestsDB-2"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
@@ -51,14 +50,13 @@ public class TestSearchMultipleForests extends BasicJavaClientREST {
 		configureRESTServer(dbName, fNames);
 		createForest(fNames[1],dbName);
 		setupAppServicesGeoConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
 	public void testSearchMultipleForest() throws KeyManagementException, NoSuchAlgorithmException, IOException,  SAXException, ParserConfigurationException, TransformerException
 	{	
 		System.out.println("Running testSearchMultipleForest");
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		DocumentManager docMgr = client.newDocumentManager();
 		StringHandle writeHandle1 = new StringHandle();
@@ -131,13 +129,13 @@ public class TestSearchMultipleForests extends BasicJavaClientREST {
 		queryMgr.search(querydef, sHandleOnForest2, 0, t, fNames[1]);
 		assertTrue("Documents count on Forest 2 is ", sHandleOnForest2.getTotalResults() == 10);
 		t.rollback();
-
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

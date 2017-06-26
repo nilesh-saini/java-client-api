@@ -25,16 +25,13 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.pojo.PojoPage;
@@ -46,31 +43,21 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 
 	private static String dbName = "TestPOJORWTransDB";
 	private static String [] fNames = {"TestPOJORWTransDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {		
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
 
 	public Artifact getArtifact(int counter){
@@ -87,12 +74,14 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 
 		return cogs;
 	}
+	
 	public void validateArtifact(Artifact art)
 	{
 		assertNotNull("Artifact object should never be Null",art);
 		assertNotNull("Id should never be Null",art.id);
 		assertTrue("Inventry is always greater than 1000", art.getInventory()>1000);
 	}
+	
 	//This test is to persist a simple design model objects in ML, read from ML, delete all
 	// Issue 104 for unable to have transaction in count,exists, delete methods
 	@Test
@@ -100,72 +89,73 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		PojoRepository<Artifact,Long> products = client.newPojoRepository(Artifact.class, Long.class);
 		Transaction t= client.openTransaction();
 		//Load more than 100 objects
-		try{
-			for(int i=1;i<112;i++){
+		try {
+			for(int i=1;i<112;i++) {
 				products.write(this.getArtifact(i),t);
 			}
 			assertEquals("Total number of object recods",111, products.count(t));
-			for(long i=1;i<112;i++){
+			for(long i=1;i<112;i++) {
 				assertTrue("Product id "+i+" does not exist",products.exists(i,t));
 				this.validateArtifact(products.read(i,t));
 			}
 
-		}catch(Exception e){
+		} catch(Exception e) {
 			throw e;
-		}finally{
+		} finally {
 			t.rollback();
 		}
 
-		for(long i=1;i<112;i++){
+		for(long i=1;i<112;i++) {
 			assertFalse("Product id exists ?",products.exists(i));
 		}
 	}
+	
 	//This test is to persist objects into different collections, read documents based on Id and delete single object based on Id
 	@Test
 	public void test1POJOWriteWithTransCollection() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		PojoRepository<Artifact,Long> products = client.newPojoRepository(Artifact.class, Long.class);
 		//Load more than 110 objects into different collections
 		Transaction t= client.openTransaction();
-		try{
-			for(int i=112;i<222;i++){
-				if(i%2==0){
+		try {
+			for(int i=112;i<222;i++) {
+				if(i%2==0) {
 					products.write(this.getArtifact(i),t,"even","numbers");
 				}
 				else {
 					products.write(this.getArtifact(i),t,"odd","numbers");
 				}
 			}
-		}catch(Exception e){throw e;}
-		finally{t.commit();}
+		} catch(Exception e) {throw e;}
+		finally {t.commit();}
 		assertEquals("Total number of object recods",110, products.count("numbers"));
 		assertEquals("Collection even count",55,products.count("even"));
 		assertEquals("Collection odd count",55,products.count("odd"));
-		for(long i=112;i<222;i++){
+		for(long i=112;i<222;i++) {
 			// validate all the records inserted are readable
 			assertTrue("Product id "+i+" does not exist",products.exists(i));
 			this.validateArtifact(products.read(i));
 		}
 		Transaction t2= client.openTransaction();
-		try{
+		try {
 		Long[] ids = {(long)112,(long)113};
 		products.delete(ids,t2);
 		assertFalse("Product id 112 exists ?",products.exists((long)112,t2));
-//		assertTrue("Product id 112 exists ?",products.exists((long)112));
 		products.deleteAll(t2);
-		for(long i=112;i<222;i++){
+		for(long i=112;i<222;i++) {
 			assertFalse("Product id "+i+" exists ?",products.exists(i,t2));
-//			assertTrue("Product id "+i+" exists ?",products.exists(i));
 		}
-		}catch(Exception e){throw e;}
-		finally{t2.commit();}
+		}
+		catch(Exception e) {throw e;}
+		finally {t2.commit();}
 		//see any document exists
-		for(long i=112;i<222;i++){
+		for(long i=112;i<222;i++) {
 			assertFalse("Product id "+i+" exists ?",products.exists(i));
 		}
 		//see if it complains when there are no records
 		products.delete((long)112);
 		products.deleteAll();
 	}
+	
 	//This test is to read objects into pojo page based on Ids 
 	// until #103 is resolved	
 	@Test
@@ -175,9 +165,9 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		products.deleteAll();
 		Long[] ids= new Long[111];
 		int j=0;
-		for(int i=222;i<333;i++){
+		for(int i=222;i<333;i++) {
 			ids[j] =(long) i;j++;
-			if(i%2==0){
+			if(i%2==0) {
 				products.write(this.getArtifact(i),"even","numbers");
 			}
 			else {
@@ -195,14 +185,11 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		PojoPage<Artifact> p= products.search(1, "numbers");
 		// test for page methods
 		assertEquals("Number of records",100,p.size());
-//		System.out.println("Page size"+p.size());
 		assertEquals("Starting record in first page ",1,p.getStart());
-//		System.out.println("Starting record in first page "+p.getStart());
 
 		assertEquals("Total number of estimated results:",111,p.getTotalSize());
-//		System.out.println("Total number of estimated results:"+p.getTotalSize());
 		assertEquals("Total number of estimated pages :",2,p.getTotalPages());
-//		System.out.println("Total number of estimated pages :"+p.getTotalPages());
+
 		System.out.println("is this firstPage or LastPage:"+p.isFirstPage()+"  "+p.isLastPage()+"has  previous page"+p.hasPreviousPage());
 		assertTrue("Is this First page :",p.isFirstPage());//this is bug
 		assertFalse("Is this Last page :",p.isLastPage());
@@ -210,35 +197,35 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		//		Need the Issue #75 to be fixed  
 		assertFalse("Is first page has previous page ?",p.hasPreviousPage());
 		long pageNo=1,count=0;
-		do{
+		do {
 			count=0;
 			p= products.search(pageNo, "numbers");
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", p.isFirstPage());
 				assertTrue("Is page has previous page ?",p.hasPreviousPage());
 			}
 			Iterator<Artifact> itr = p.iterator();
-			while(itr.hasNext()){
+			while(itr.hasNext()) {
 				this.validateArtifact(p.iterator().next());
 				count++;
 			}
-			//			assertEquals("document count", p.size(),count);
+
 			System.out.println("Is this Last page :"+p.hasContent()+p.isLastPage()+p.getPageNumber());
 			pageNo = pageNo + p.getPageSize();
-		}while(pageNo< p.getTotalSize());
+		} while(pageNo< p.getTotalSize());
 		assertTrue("Page has previous page ?",p.hasPreviousPage());
 		assertEquals("page size", 11,p.size());
 		assertEquals("document count", 111,p.getTotalSize());
 		assertTrue("Page has any records ?",p.hasContent());
-
-
+		
 		products.deleteAll();
 		//see any document exists
-		for(long i=112;i<222;i++){
+		for(long i=112;i<222;i++) {
 			assertFalse("Product id "+i+" exists ?",products.exists(i));
 		}
 		//see if it complains when there are no records
 	}
+	
 	@Test
 	public void test3POJOWriteWithPojoPageReadAll() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		
@@ -247,9 +234,9 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		products.deleteAll();
 		Transaction t= client.openTransaction();
 		PojoPage<Artifact> p;
-		try{
-			for(int i=222;i<333;i++){
-				if(i%2==0){
+		try {
+			for(int i=222;i<333;i++) {
+				if(i%2==0) {
 					products.write(this.getArtifact(i),t,"even","numbers");
 				}
 				else {
@@ -257,7 +244,6 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 				}
 			}
 			
-//			System.out.println("Default Page length setting on docMgr :"+products.getPageLength());
 			assertEquals("Default setting for page length",50,products.getPageLength());
 			products.setPageLength(25);
 			assertEquals("explicit setting for page length",25,products.getPageLength());
@@ -278,35 +264,34 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 			//		Need the Issue #75 to be fixed  
 			assertFalse("Is first page has previous page ?",p.hasPreviousPage());
 			long pageNo=1,count=0;
-			do{
+			do {
 				count=0;
 				p= products.readAll(pageNo,t);
 
-				if(pageNo >1){ 
+				if(pageNo >1) { 
 					assertFalse("Is this first Page", p.isFirstPage());
 					assertTrue("Is page has previous page ?",p.hasPreviousPage());
 				}
 
-				while(p.iterator().hasNext()){
+				while(p.iterator().hasNext()) {
 					this.validateArtifact(p.iterator().next());
 					count++;
 				}
 				assertEquals("document count", p.size(),count);
 
 				pageNo = pageNo + p.getPageSize();
-			}while(!(p.isLastPage()) && pageNo < p.getTotalSize());
+			} while(!(p.isLastPage()) && pageNo < p.getTotalSize());
 
 			assertTrue("Page has previous page ?",p.hasPreviousPage());
 			assertEquals("page size", 11,p.size());
 			assertEquals("document count", 111,p.getTotalSize());
-		}catch(Exception e){
+		} catch(Exception e) {
 			throw e;
-		}finally{
+		} finally {
 			t.rollback();
 		}
 		p=products.readAll(1);
 		assertFalse("Page has any records ?",p.hasContent());
-
 	}
 
 //	@Test
@@ -316,9 +301,9 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		products.deleteAll();
 		Transaction t= client.openTransaction();
 		//Load more than 111 objects into different collections
-		try{
-			for(int i=1;i<112;i++){
-				if(i%2==0){
+		try {
+			for(int i=1;i<112;i++) {
+				if(i%2==0) {
 					products.write(this.getArtifact(i),t,"even","numbers");
 				}
 				else {
@@ -331,10 +316,10 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 
 			products.setPageLength(10);
 			long pageNo=1,count=0;
-			do{
+			do {
 				count =0;
 				p = products.search(pageNo, "even");
-				while(p.iterator().hasNext()){
+				while(p.iterator().hasNext()) {
 					Artifact a =p.iterator().next();
 					validateArtifact(a);
 					assertTrue("Artifact Id is even", a.getId()%2==0);
@@ -342,12 +327,12 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
-			}while(!p.isLastPage() && pageNo<p.getTotalSize());
+			} while(!p.isLastPage() && pageNo<p.getTotalSize());
 			assertEquals("total no of pages",0,p.getTotalPages());
-			do{
+			do {
 				count =0;
 				p = products.search(pageNo,t, "even");
-				while(p.iterator().hasNext()){
+				while(p.iterator().hasNext()) {
 					Artifact a =p.iterator().next();
 					validateArtifact(a);
 					assertTrue("Artifact Id is even", a.getId()%2==0);
@@ -355,34 +340,34 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
-			}while(!p.isLastPage() && pageNo<p.getTotalSize());
+			} while(!p.isLastPage() && pageNo<p.getTotalSize());
 			assertEquals("total no of pages",6,p.getTotalPages());
 
 			pageNo=1;
-			do{
+			do {
 				count =0;
 				p = products.search(1,t, "odd");
-				while(p.iterator().hasNext()){
+				while(p.iterator().hasNext()) {
 					Artifact a =p.iterator().next();
 					assertTrue("Artifact Id is even", a.getId()%2 !=0);
 					validateArtifact(a);
 					products.delete(a.getId());
 					count++;
 				}
-				//			assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
 
-			}while(!p.isLastPage() );
+			} while(!p.isLastPage());
 
 			assertEquals("Total no of documents left",0,products.count());
-		}catch(Exception e){
+		} catch(Exception e) {
 			throw e;
-		}finally{
+		} finally {
 			t.rollback();
 		}
 		//see any document exists
 		assertFalse("all the documents are deleted",products.exists((long)12));
 	}
+	
 @Test
 	public void test5POJOSearchWithQueryDefinitionandTransaction() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		PojoRepository<Artifact,Long> products = client.newPojoRepository(Artifact.class, Long.class);
@@ -390,9 +375,9 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		products.deleteAll();
 		Transaction t= client.openTransaction();
 		//Load more than 111 objects into different collections
-		try{
-			for(int i=1;i<112;i++){
-				if(i%2==0){
+		try {
+			for(int i=1;i<112;i++) {
+				if(i%2==0) {
 					products.write(this.getArtifact(i),t,"even","numbers");
 				}
 				else {
@@ -408,19 +393,19 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 			StringQueryDefinition qd = queryMgr.newStringDefinition();
 			qd.setCriteria("Acme");
 			long pageNo=1,count=0;
-			do{
+			do {
 				count =0;
 				p = products.search(qd,pageNo);
-				while(p.iterator().hasNext()){
+				while(p.iterator().hasNext()) {
 					Artifact a =p.iterator().next();
 					validateArtifact(a);
 					count++;
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
-			}while(!p.isLastPage() && pageNo<p.getTotalSize());
+			} while(!p.isLastPage() && pageNo<p.getTotalSize());
 			assertEquals("total no of pages",6,p.getTotalPages());
-			do{
+			do {
 				count =0;
 				p = products.search(qd,pageNo,t );
 				while(p.iterator().hasNext()){
@@ -430,23 +415,22 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
-			}while(!p.isLastPage() && pageNo<p.getTotalSize());
+			} while(!p.isLastPage() && pageNo<p.getTotalSize());
 			assertEquals("total no of pages",12,p.getTotalPages());
 			SearchHandle results= new SearchHandle();
 			pageNo=1;
-			do{
+			do {
 				count =0;
 				p = products.search(qd,pageNo,results,t );
 				while(p.iterator().hasNext()){
 					Artifact a =p.iterator().next();
 					validateArtifact(a);
-//					products.delete(a.getId());
 					count++;
 				}
 				assertEquals("Page size",count,p.size());
 				pageNo=pageNo+p.getPageSize();
 
-			}while(!p.isLastPage() );
+			} while(!p.isLastPage());
 			System.out.println(results.getTotalResults());
 			assertEquals("Total no of documents ",56,products.count());
 		}catch(Exception e){
@@ -457,5 +441,4 @@ public class TestPOJOReadWriteWithTransactions extends BasicJavaClientREST{
 		//see any document exists
 		assertFalse("all the documents are deleted",products.exists((long)12));
 	}
-
 }

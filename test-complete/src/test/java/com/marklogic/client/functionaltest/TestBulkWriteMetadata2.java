@@ -28,18 +28,16 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
+import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.BinaryDocumentManager;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.DocumentPage;
@@ -62,7 +60,6 @@ import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.SourceHandle;
 import com.marklogic.client.io.StringHandle;
-import javax.xml.transform.Source;
 
 /**
  * @author skottam
@@ -81,8 +78,7 @@ public class TestBulkWriteMetadata2 extends  BasicJavaClientREST{
 	private static String dbName = "TestBulkWriteDefaultMetadataDB2";
 	private static String [] fNames = {"TestBulkWriteDefaultMetadataDB-2"};
 	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -93,6 +89,8 @@ public class TestBulkWriteMetadata2 extends  BasicJavaClientREST{
 		createRESTUser("app-user", "password","rest-writer","rest-reader"  );
 		createRESTUserWithPermissions("usr1", "password",getPermissionNode("flexrep-eval",Capability.READ),getCollectionNode("http://permission-collections/"), "rest-writer","rest-reader" );
 		setMaintainLastModified(dbName, true);
+		// create new connection for each test below
+		client = getDatabaseClientWithDigest("usr1", "password");
 	}
 
 	/**
@@ -100,29 +98,12 @@ public class TestBulkWriteMetadata2 extends  BasicJavaClientREST{
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("app-user");
 		deleteRESTUser("usr1");
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
 	}
 
 	public DocumentMetadataHandle setMetadata(){

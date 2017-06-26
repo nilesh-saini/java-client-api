@@ -34,7 +34,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.TuplesHandle;
@@ -48,18 +47,20 @@ public class TestBug21159 extends BasicJavaClientREST {
 
 	private static String dbName = "TestRawCombinedQueryDB";
 	private static String [] fNames = {"TestRawCombinedQueryDB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
-	  System.out.println("In setup");
-	  configureRESTServer(dbName, fNames);
-	  setupAppServicesConstraint(dbName);
+	    System.out.println("In setup");
+	    configureRESTServer(dbName, fNames);
+	    setupAppServicesConstraint(dbName);
 	  
     	addRangeElementIndex(dbName, "string", "", "grandchild", "http://marklogic.com/collation/");
     	addRangeElementIndex(dbName, "double", "", "double");
     	addRangeElementIndex(dbName, "int", "", "int");
     	addRangeElementIndex(dbName, "string", "", "string", "http://marklogic.com/collation/");
+    	client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -69,8 +70,6 @@ public void testBug21159Tuples() throws KeyManagementException, NoSuchAlgorithmE
 		
 		String[] filenames = {"tuples-test1.xml", "tuples-test2.xml", "tuples-test3.xml", "tuples-test4.xml", "lexicon-test1.xml","lexicon-test2.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -78,8 +77,7 @@ public void testBug21159Tuples() throws KeyManagementException, NoSuchAlgorithmE
 		srvMgr.writeConfiguration();
 				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 		
@@ -106,10 +104,7 @@ public void testBug21159Tuples() throws KeyManagementException, NoSuchAlgorithmE
 
 		CountedDistinctValue[] values = valuesResults.getValues();
 		
-		assertNotNull(values);
-
-		// release client
-		client.release();		
+		assertNotNull(values);	
 	}
 
 @Test
@@ -119,8 +114,6 @@ public void testBug21159Values() throws KeyManagementException, NoSuchAlgorithmE
 	
 	String[] filenames = {"tuples-test1.xml", "tuples-test2.xml", "tuples-test3.xml", "tuples-test4.xml", "lexicon-test1.xml","lexicon-test2.xml"};
 
-	DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	
 	// set query option validation to true
 	ServerConfigurationManager srvMgr = client.newServerConfigManager();
 	srvMgr.readConfiguration();
@@ -128,8 +121,7 @@ public void testBug21159Values() throws KeyManagementException, NoSuchAlgorithmE
 	srvMgr.writeConfiguration();
 			
 	// write docs
-	for(String filename : filenames)
-	{
+	for(String filename : filenames) {
 		writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 	}
 	
@@ -154,16 +146,14 @@ public void testBug21159Values() throws KeyManagementException, NoSuchAlgorithmE
 			new TuplesHandle());
 	Tuple[] tuples = tuplesResults.getTuples();
 	assertNotNull(tuples);
-
-	// release client
-	client.release();		
 }
 
 @AfterClass
 public static void tearDown() throws Exception
 {
 	System.out.println("In tear down");
+	// release client
+	client.release();
 	cleanupRESTServer(dbName, fNames);
-	
 }
 }

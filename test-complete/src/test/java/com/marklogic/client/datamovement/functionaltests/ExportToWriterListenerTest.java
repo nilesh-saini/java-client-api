@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.DeleteListener;
 import com.marklogic.client.datamovement.ExportToWriterListener;
@@ -110,7 +111,7 @@ public class ExportToWriterListenerTest extends com.marklogic.client.datamovemen
 		}			
 		associateRESTServerWithDB(server,dbName);
 		
-		dbClient = DatabaseClientFactory.newClient(host, port, user, password, Authentication.DIGEST);
+		dbClient = DatabaseClientFactory.newClient(host, port, new DigestAuthContext(user, password));
 		dmManager = dbClient.newDataMovementManager();
 		
 		clusterInfo = ((DatabaseClientImpl) dbClient).getServices()
@@ -165,6 +166,7 @@ public class ExportToWriterListenerTest extends com.marklogic.client.datamovemen
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		dbClient.release();
 		associateRESTServerWithDB(server,"Documents");
 		for (int i =0 ; i < clusterInfo.size(); i++) {
 			System.out.println(dbName+"-"+(i+1));

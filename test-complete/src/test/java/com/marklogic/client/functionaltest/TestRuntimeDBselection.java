@@ -30,25 +30,27 @@ import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.FailedRequestException;
 
 public class TestRuntimeDBselection extends BasicJavaClientREST {
 	private static String dbName = "TestRuntimeDB";
 	private static String [] fNames = {"TestRuntimeDB-1"};
-	
-	private  DatabaseClient client ;
+	private static String hostname = null;
+	private  static DatabaseClient client = null
+			;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames, false);
 	     createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke");
 	     createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
+	     hostname = getRestServerHostName();
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("eval-user");
 		deleteUserRole("test-eval");
@@ -60,7 +62,7 @@ public class TestRuntimeDBselection extends BasicJavaClientREST {
 		if 	(!IsSecurityEnabled()) {
 		associateRESTServerWithDefaultUser(getRestServerName(),"eval-user","application-level");
 		int restPort = getRestServerPort();
-		client = DatabaseClientFactory.newClient("localhost", restPort, dbName);
+		client = DatabaseClientFactory.newClient(hostname, restPort, dbName);
 		String insertJSON = "xdmp:document-insert(\"test2.json\",object-node {\"test\":\"hello\"})";
 		client.newServerEval().xquery(insertJSON).eval();
 		String query1 = "fn:count(fn:doc())";
@@ -80,8 +82,9 @@ public class TestRuntimeDBselection extends BasicJavaClientREST {
 		if 	(!IsSecurityEnabled()) {
 		associateRESTServerWithDefaultUser(getRestServerName(),"nobody","basic");
 		int restPort = getRestServerPort();
+		String hostname = getRestServerHostName();
 		
-		client = getDatabaseClientOnDatabase("localhost", restPort, dbName,"eval-user","x",Authentication.BASIC);
+		client = getDatabaseClientOnDatabaseWithBasic(hostname, restPort, dbName, "eval-user","x");
 		String insertJSON = "xdmp:document-insert(\"test2.json\",object-node {\"test\":\"hello\"})";
 		client.newServerEval().xquery(insertJSON).eval();
 		String query1 = "fn:count(fn:doc())";
@@ -104,7 +107,7 @@ public class TestRuntimeDBselection extends BasicJavaClientREST {
 		int restPort = getRestServerPort();
 		if 	(IsSecurityEnabled()) throw new FailedRequestException("Illegal");
 		else
-			client = DatabaseClientFactory.newClient("localhost", restPort, dbName,"rest-admin","x",Authentication.DIGEST);
+			client = DatabaseClientFactory.newClient(hostname, restPort, dbName, new DigestAuthContext("rest-admin","x"));
 		String insertJSON = "xdmp:document-insert(\"test2.json\",object-node {\"test\":\"hello\"})";
 		try{
 			client.newServerEval().xquery(insertJSON).eval();

@@ -34,7 +34,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.TuplesHandle;
@@ -44,21 +43,18 @@ import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.ValuesDefinition;
 
 public class TestAggregates extends BasicJavaClientREST  {
-
 	
 	private static String dbName = "TestAggregatesDB";
 	private static String [] fNames = {"TestAggregatesDB-1"};
-	
-	
+	private static DatabaseClient client = null;	
  
     @BeforeClass
 	public static void setUp() throws Exception 
 	{
-	   System.out.println("In setup");
+	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
-	  
-	 // System.out.println(" and "+ serverName + dbName + restServerName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");	 
 	}
 	
     @After
@@ -75,11 +71,8 @@ public class TestAggregates extends BasicJavaClientREST  {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/values-aggr/", "XML");
 		}
 		
@@ -119,8 +112,7 @@ public class TestAggregates extends BasicJavaClientREST  {
         assertEquals("Invalid max", "5", agg[2].getValue());
         System.out.println(agg[3].getValue());
         assertEquals("Invalid min", "3", agg[3].getValue());
-        		
-        
+                
         QueryManager queryMgr1 = client.newQueryManager();
 		// create query def
 		ValuesDefinition queryDef1 = queryMgr1.newValuesDefinition("score", "aggregatesOpt.xml");
@@ -139,12 +131,9 @@ public class TestAggregates extends BasicJavaClientREST  {
         double score_max = agg1[2].get("xs:double", Double.class);
         double score_min = agg1[3].get("xs:double", Double.class);
 		System.out.println("Sum :"+score_sum+" Average :"+score_avg+" Max Score :"+score_max+" Min Score :"+score_min);
-       
-		// release client
-		client.release();		
+		
 	}
-	
-	
+		
 	@Test
 	public void testValuesAggregatesWithNS() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
@@ -153,11 +142,8 @@ public class TestAggregates extends BasicJavaClientREST  {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/values-aggr-ns/", "XML");
 		}
 		
@@ -202,10 +188,9 @@ public class TestAggregates extends BasicJavaClientREST  {
         assertEquals("Invalid max", "92.45", df.format(agg[2].get("xs:double", Double.class)));
         System.out.println("agg[3] :"+agg[3].getValue());
         assertEquals("Invalid min", "12.34", df.format(agg[3].get("xs:double", Double.class)));
-        		
-		// release client
-		client.release();		
+        
 	}
+	
 	@Test
 	public void testTuplesAggregates() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
@@ -214,11 +199,8 @@ public class TestAggregates extends BasicJavaClientREST  {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/tuples-aggr/", "XML");
 		}
 		
@@ -250,10 +232,9 @@ public class TestAggregates extends BasicJavaClientREST  {
         
         assertEquals("Invalid correlation", "0.26", roundedCorrelation);
         assertEquals("Invalid covariance", "0.35", roundedCovariance);
-        		
-		// release client
-		client.release();		
+        
 	}
+	
 	@Test
 	public void testValuesAggregatesWithJson() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
@@ -261,12 +242,9 @@ public class TestAggregates extends BasicJavaClientREST  {
 		
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/values-aggr/", "XML");
 		}
 		
@@ -287,10 +265,9 @@ public class TestAggregates extends BasicJavaClientREST  {
 		
 		System.out.println(result);
 		
-		assertEquals("{", result.substring(0, 1));        		
-		// release client
-		client.release();		
+		assertEquals("{", result.substring(0, 1));
 	}
+	
 	@Test
 	public void testValuesAggregatesThreeOccurences() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
@@ -299,11 +276,8 @@ public class TestAggregates extends BasicJavaClientREST  {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml"};
 		String queryOptionName = "aggregatesOpt3Occ.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/values-aggr/", "XML");
 		}
 		
@@ -344,10 +318,9 @@ public class TestAggregates extends BasicJavaClientREST  {
         System.out.println(roundedCorrelation);
         System.out.println(roundedCovariance);
         assertEquals("Invalid correlation", "0.43", roundedCorrelation);
-        assertEquals("Invalid covariance", "0.67", roundedCovariance);
-		// release client
-		client.release();		
+        assertEquals("Invalid covariance", "0.67", roundedCovariance);	
 	}
+	
 	@Test
 	public void testValuesAggregatesFiveOccurences() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
 	{	
@@ -356,11 +329,8 @@ public class TestAggregates extends BasicJavaClientREST  {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml"};
 		String queryOptionName = "aggregatesOpt5Occ.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/values-aggr/", "XML");
 		}
 		
@@ -379,16 +349,15 @@ public class TestAggregates extends BasicJavaClientREST  {
 						
         AggregateResult[] agg = valuesHandle.getAggregates();
         System.out.println(agg.length);
-        System.out.println(agg[0].getValue());
-
-		// release client
-		client.release();		
+        System.out.println(agg[0].getValue());		
 	}
 	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

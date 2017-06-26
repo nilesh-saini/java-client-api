@@ -16,21 +16,20 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.pojo.PojoPage;
@@ -46,7 +45,7 @@ public class TestPOJOReadWrite1 extends BasicJavaClientREST {
 	Calendar calOne = null;
 	Calendar calTwo = null;
 		
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 	/*
 	 * @Id annotation on String type 
 	 */
@@ -125,21 +124,13 @@ public class TestPOJOReadWrite1 extends BasicJavaClientREST {
 		configureRESTServer(dbName, fNames);
 		// Add a path range index for expiryDate indexed on dateTime (with POJO having Java Calendar type)
 		addRangePathIndex(dbName, "dateTime", "com.marklogic.client.functionaltest.ArtifactIndexedOnCalendar/expiryDate", "", "reject",true);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
 		// release client
 		client.release();
 	}
@@ -336,7 +327,7 @@ public class TestPOJOReadWrite1 extends BasicJavaClientREST {
 		assertEquals("document count", p.size(), count);
 		
 		pageNo = pageNo + p.getPageSize();
-		}while(!(p.isLastPage()) && pageNo < p.getTotalSize());
+		} while(!(p.isLastPage()) && pageNo < p.getTotalSize());
 		assertTrue("page count is 111 ", pageNo == p.getTotalPages());
 		assertTrue("Page has previous page ?", p.hasPreviousPage());
 		assertEquals("page size", 1, p.getPageSize());
@@ -490,8 +481,7 @@ public void testPOJOgetDocumentUri() {
 					fail("Range Query on Calendar type failed when greater than 97 used.");
 				}
 				count++;
-			}
-					
+			}					
 			assertEquals("Number of rows returned count should be 13", 13, count);
 			assertEquals("Page size",count, p.size());
 			pageNo=pageNo+p.getPageSize();

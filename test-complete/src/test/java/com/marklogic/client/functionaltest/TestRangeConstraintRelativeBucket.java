@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 
 public class TestRangeConstraintRelativeBucket extends BasicJavaClientREST {
@@ -35,7 +34,7 @@ public class TestRangeConstraintRelativeBucket extends BasicJavaClientREST {
 	static String queryOptionName = "rangeRelativeBucketConstraintOpt.xml"; 
 	private static String dbName = "RangeConstraintRelBucketDB";
 	private static String [] fNames = {"RangeConstraintRelBucketDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
@@ -43,16 +42,14 @@ public class TestRangeConstraintRelativeBucket extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		addRangeElementAttributeIndex(dbName, "dateTime", "http://example.com", "entry", "", "date");
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testRangeConstraintRelativeBucket() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename:filenames)
-		{
+		for(String filename:filenames) {
 			writeDocumentReaderHandle(client, filename, "/range-constraint-rel-bucket/", "XML");
 		}
 
@@ -66,15 +63,14 @@ public class TestRangeConstraintRelativeBucket extends BasicJavaClientREST {
 		String result = "Matched "+resultsHandle.getTotalResults();
 		String expectedResult = "Matched 5";
 		assertEquals("Document match difference", expectedResult, result);
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

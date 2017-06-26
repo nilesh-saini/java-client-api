@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -40,6 +39,7 @@ public class TestBug19046 extends BasicJavaClientREST {
 
 	private static String dbName = "Bug19046DB";
 	private static String [] fNames = {"Bug19046DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -47,6 +47,7 @@ public class TestBug19046 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -54,8 +55,6 @@ public class TestBug19046 extends BasicJavaClientREST {
 	{	
 		System.out.println("Running testBug19046");
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// create query options manager
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
 		        
@@ -67,8 +66,7 @@ public class TestBug19046 extends BasicJavaClientREST {
 		
 		String exception = "";
      	
-		try
-		{
+		try {
 			optionsMgr.readOptions("NonExistentOpt", readHandle);
 		}
 		catch (Exception e) { exception = e.toString(); }
@@ -76,15 +74,13 @@ public class TestBug19046 extends BasicJavaClientREST {
 		System.out.println(exception);
 		
 		assertTrue("Exception is not thrown", exception.contains(expectedException));
-     	
-		// release client
-		client.release();		
 	}
 		@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();	
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

@@ -21,48 +21,34 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.pojo.PojoPage;
 import com.marklogic.client.pojo.PojoRepository;
 
 public class TestPOJOBasicSearch extends BasicJavaClientREST {
 	private static String dbName = "TestPOJObasicSearchDB";
 	private static String [] fNames = {"TestPOJObasicSearchDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-	@After
-	public void tearDown() throws KeyManagementException, NoSuchAlgorithmException, Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
-
+	
 	public Artifact getArtifact(int counter){
 		Company acme = new Company();
 		acme.setName("Acme "+counter+", Inc.");
@@ -77,11 +63,12 @@ public class TestPOJOBasicSearch extends BasicJavaClientREST {
 
 		return cogs;
 	}
+	
     public void validateArtifact(Artifact art)
     {
-    assertNotNull("Artifact object should never be Null",art);
-    assertNotNull("Id should never be Null",art.id);
-    assertTrue("Inventry is always greater than 1000", art.getInventory()>1000);
+        assertNotNull("Artifact object should never be Null",art);
+        assertNotNull("Id should never be Null",art.id);
+        assertTrue("Inventry is always greater than 1000", art.getInventory()>1000);
     }
  
 	//This test is to search objects under different collections, read documents to validate
@@ -90,8 +77,8 @@ public class TestPOJOBasicSearch extends BasicJavaClientREST {
 		PojoRepository<Artifact,Long> products = client.newPojoRepository(Artifact.class, Long.class);
 		PojoPage<Artifact> p;
 		//Load more than 111 objects into different collections
-		for(int i=1;i<112;i++){
-			if(i%2==0){
+		for(int i=1;i<112;i++) {
+			if(i%2==0) {
 			products.write(this.getArtifact(i),"even","numbers");
 			}
 			else {
@@ -104,10 +91,10 @@ public class TestPOJOBasicSearch extends BasicJavaClientREST {
 		
 		products.setPageLength(5);
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(pageNo, "even");
-			while(p.iterator().hasNext()){
+			while(p.iterator().hasNext()) {
 				Artifact a =p.iterator().next();
 				validateArtifact(a);
 				assertTrue("Artifact Id is even", a.getId()%2==0);
@@ -115,39 +102,37 @@ public class TestPOJOBasicSearch extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<p.getTotalSize());
 		assertEquals("total no of pages",11,p.getTotalPages());
 		pageNo=1;
-		do{
+		do {
 			count =0;
 			p = products.search(1, "odd");
-			while(p.iterator().hasNext()){
+			while(p.iterator().hasNext()) {
 				Artifact a =p.iterator().next();
 				assertTrue("Artifact Id is even", a.getId()%2 !=0);
 				validateArtifact(a);
 				products.delete(a.getId());
 				count++;
 			}
-//			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
 			
-		}while(!p.isLastPage() );
+		} while(!p.isLastPage() );
 		
 		assertEquals("Total no of documents left",55,products.count());
 		products.deleteAll();
 		//see any document exists
 		assertFalse("all the documents are deleted",products.exists((long)12));
 	}
-	
-	
+		
 	@Test
 	public void testPOJOWriteWithPojoPageReadAll() {
 		PojoRepository<Artifact,Long> products = client.newPojoRepository(Artifact.class, Long.class);
 		//Load more than 110 objects into different collections
 		products.deleteAll();
-		for(int i=222;i<333;i++){
-		if(i%2==0){
-			products.write(this.getArtifact(i),"even","numbers");
+		for(int i=222;i<333;i++) {
+		if(i%2==0) {
+			    products.write(this.getArtifact(i),"even","numbers");
 			}
 		else {
 				products.write(this.getArtifact(i),"odd","numbers");
@@ -178,32 +163,29 @@ public class TestPOJOBasicSearch extends BasicJavaClientREST {
 		//		Need the Issue #75 to be fixed  
 		assertFalse("Is first page has previous page ?",p.hasPreviousPage());
 		long pageNo=1,count=0;
-		do{
+		do {
 			count=0;
 			p= products.search(pageNo,"numbers");
 			
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", p.isFirstPage());
 				assertTrue("Is page has previous page ?",p.hasPreviousPage());
 			}
 			
-		while(p.iterator().hasNext()){
+		while(p.iterator().hasNext()) {
 			this.validateArtifact(p.iterator().next());
 			count++;
 		}
 		assertEquals("document count", p.size(),count);
 		
 		pageNo = pageNo + p.getPageSize();
-		}while(!(p.isLastPage()) && pageNo < p.getTotalSize());
-//		assertTrue("page count is 111 ",pageNo == p.getTotalPages());
+		} while(!(p.isLastPage()) && pageNo < p.getTotalSize());
 		assertTrue("Page has previous page ?",p.hasPreviousPage());
 		assertEquals("page size", 1,p.getPageSize());
 		assertEquals("document count", 111,p.getTotalSize());
 
 		products.deleteAll();
 		p= products.readAll(1);
-		assertFalse("Page has any records ?",p.hasContent());
-		
-		
+		assertFalse("Page has any records ?",p.hasContent());		
 	}
 }

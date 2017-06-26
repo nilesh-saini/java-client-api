@@ -31,7 +31,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.NamespacesManager;
 import com.marklogic.client.document.DocumentPatchBuilder;
 import com.marklogic.client.document.XMLDocumentManager;
@@ -42,7 +41,7 @@ import com.marklogic.client.util.RequestLogger;
 public class TestNamespaces extends BasicJavaClientREST {
 	private static String dbName = "TestNamespacesDB";
 	private static String [] fNames = {"TestNamespacesDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception 
@@ -50,15 +49,13 @@ public class TestNamespaces extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test
 	public void testNamespaces() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{	
 		System.out.println("Running testNamespaces");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create namespaces manager
 		NamespacesManager nsMgr = client.newServerConfigManager().newNamespacesManager();
@@ -94,19 +91,13 @@ public class TestNamespaces extends BasicJavaClientREST {
 		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("foo") == null);
 
 		nsMgr.deleteAll();
-		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("foo") == null);
-
-		// release client
-		client.release();
+		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("foo") == null);		
 	}
 
 	@Test	
 	public void testDefaultNamespaces() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
 		System.out.println("Running testDefaultNamespaces");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create namespaces manager
 		NamespacesManager nsMgr = client.newServerConfigManager().newNamespacesManager();
@@ -136,9 +127,6 @@ public class TestNamespaces extends BasicJavaClientREST {
 		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("ns2") == null);
 		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("ns3") == null);
 		assertTrue("Namespace URI is not deleted", nsMgr.readPrefix("defaultns") == null);
-
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -146,7 +134,7 @@ public class TestNamespaces extends BasicJavaClientREST {
 
 		System.out.println("Runing testBug22396");
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
+		DatabaseClient client = getDatabaseClientWithDigest("rest-writer", "x");
 
 		// write docs
 		writeDocumentUsingInputStreamHandle(client, "constraint1.xml", "/testBug22396/", "XML");
@@ -180,6 +168,8 @@ public class TestNamespaces extends BasicJavaClientREST {
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

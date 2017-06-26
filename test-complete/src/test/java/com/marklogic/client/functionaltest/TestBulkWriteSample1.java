@@ -28,11 +28,10 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -40,7 +39,6 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.document.BinaryDocumentManager;
@@ -59,7 +57,6 @@ import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.ReaderHandle;
 import com.marklogic.client.io.SourceHandle;
 import com.marklogic.client.io.StringHandle;
-import javax.xml.transform.Source;
 
 /*
  * This test is designed to to test simple bulk writes with different types of Managers and different content type like JSON,text,binary,XMl
@@ -71,37 +68,22 @@ import javax.xml.transform.Source;
  *  GenericDocumentManager
  */
 
-
-
 public class TestBulkWriteSample1 extends BasicJavaClientREST  {
-
 
 	private static String dbName = "TestBulkWriteSampleDB";
 	private static String [] fNames = {"TestBulkWriteSampleDB-1"};
 	
+	private static DatabaseClient client = null;
 	
-	private  DatabaseClient client ;
 	@BeforeClass
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
-	}
-
-	@Before  public void testSetup() throws KeyManagementException, NoSuchAlgorithmException, Exception
-	{
 		// create new connection for each test below
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
-	@After
-	public  void testCleanUp() throws Exception
-	{
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
 
-
-	}
 	/*
 	 * This is cloned in github with tracking bug #27685 
 	 * https://github.com/marklogic/java-client-api/issues/23
@@ -112,7 +94,6 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 	@Test  
 	public void testWriteMultipleTextDoc() 
 	{
-
 		String docId[] = {"/foo/test/myFoo1.txt","/foo/test/myFoo2.txt","/foo/test/myFoo3.txt"};
 
 		TextDocumentManager docMgr = client.newTextDocumentManager();
@@ -139,8 +120,6 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 	@Test  
 	public void testWriteMultipleXMLDoc() throws KeyManagementException, NoSuchAlgorithmException, Exception  
 	{
-
-
 		String docId[] = {"/foo/test/Foo1.xml","/foo/test/Foo2.xml","/foo/test/Foo3.xml"};
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
@@ -154,7 +133,6 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		DOMHandle dh = new DOMHandle();
 		docMgr.read(docId[0], dh);  
 
-
 		assertEquals("xml document write difference", "This is so foo1",dh.get().getChildNodes().item(0).getTextContent());
 		docMgr.read(docId[1], dh);
 		assertEquals("xml document write difference", "This is so foo2", dh.get().getChildNodes().item(0).getTextContent());
@@ -164,6 +142,7 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		//Bulk delete on XMLDocumentManager
 		docMgr.delete(docId[0],docId[1],docId[2]);
 	}
+	
 	/*
 	 * This test uses FileHandle to load 3 binary documents with same URI, writes to database using bulk write set.
 	 * Expecting an exception.
@@ -184,6 +163,7 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		docMgr.write(writeset);
 
 	}
+	
 	/*
 	 * This test uses FileHandle to load 3 binary documents, writes to database using bulk write set.
 	 * Verified by reading individual documents
@@ -259,6 +239,7 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		assertEquals("Json File Content"+docId[2],json3,new BufferedReader(r1.get()).readLine());
 		bfr.close();
 	}
+	
 	@Test
 	public void testWriteMultipleJAXBDocs() throws KeyManagementException, NoSuchAlgorithmException, Exception  
 	{
@@ -278,8 +259,7 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		JAXBContext context = JAXBContext.newInstance(Product.class);
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		//		 JAXBHandle contentHandle = new JAXBHandle(context);
-		//		 contentHandle.set(product1);
+		
 		writeset.add(docId[0],new JAXBHandle<Product>(context).with(product1));
 		writeset.add(docId[1],new JAXBHandle<Product>(context).with(product2));
 		writeset.add(docId[2],new JAXBHandle<Product>(context).with(product3));
@@ -295,6 +275,7 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		docMgr.read(docId[2], dh);
 		assertEquals("xml document write difference", "Very cool Ipod", dh.get().getChildNodes().item(0).getChildNodes().item(1).getTextContent());
 	}
+	
 	/*
 	 * This test uses GenericManager to load all different document types
 	 * This test has a bug logged in github with tracking Issue#33
@@ -458,10 +439,13 @@ public class TestBulkWriteSample1 extends BasicJavaClientREST  {
 		//Make sure that bulk delete indeed worked. Should throw ResourceNotFoundException.
 		docMgr.read("/generic/"+docId[0],rhDeleted);		
 	}
+	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

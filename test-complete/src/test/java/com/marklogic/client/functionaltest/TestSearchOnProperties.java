@@ -38,7 +38,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DOMHandle;
@@ -56,7 +55,7 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 
 	private static String dbName = "SearchPropsDB";
 	private static String [] fNames = {"SearchPropsDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
@@ -64,14 +63,12 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testSearchOnProperties() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
 
 		// create the query options
@@ -184,9 +181,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 				}
 			}	 	
 		}   
-
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -198,8 +192,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		String filename2 = "property2.xml";
 		String filename3 = "property3.xml";
 		String queryOptionName = "propertiesSearchWordOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -233,9 +225,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/properties-search/property2.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -247,8 +236,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		String filename2 = "property2.xml";
 		String filename3 = "property3.xml";
 		String queryOptionName = "propertiesSearchWordOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -283,9 +270,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/properties-search/property1.xml", "string(//*[local-name()='result'][1]//@*[local-name()='uri'])", resultDoc);
 		assertXpathEvaluatesTo("/properties-search/property2.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -297,9 +281,6 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		String filename2 = "property2.xml";
 		String filename3 = "property3.xml";
 		String queryOptionName = "propertiesSearchWordOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
 		DocumentMetadataHandle metadataHandle2 = new DocumentMetadataHandle();
@@ -334,16 +315,15 @@ public class TestSearchOnProperties extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/properties-search/property1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/properties-search/property1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);			
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

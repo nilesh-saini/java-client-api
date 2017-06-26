@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -40,16 +41,15 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.JSONDocumentManager;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.InputStreamHandle;
-import java.util.Map;
 public class TestBug18026 extends BasicJavaClientREST {
 	
 	private static String dbName = "Bug18026DB";
 	private static String [] fNames = {"Bug18026DB-1"};
+	private static DatabaseClient client = null;
 	
 	private XpathEngine xpather;
 	@BeforeClass
@@ -57,6 +57,7 @@ public class TestBug18026 extends BasicJavaClientREST {
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		 client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test
@@ -87,9 +88,6 @@ public class TestBug18026 extends BasicJavaClientREST {
 
         xpather = XMLUnit.newXpathEngine();
         xpather.setNamespaceContext(namespaceContext);
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		Document readDoc = expectedXMLDocument(filename);
 		
@@ -113,9 +111,6 @@ public class TestBug18026 extends BasicJavaClientREST {
 		System.out.println("After: " + strAfter);
 		
 		assertXMLEqual("Buffer is not the same", strBefore, strAfter);
-		
-	    // release client
-	    client.release();
 	}
 
 	@Test
@@ -148,9 +143,6 @@ public class TestBug18026 extends BasicJavaClientREST {
         xpather.setNamespaceContext(namespaceContext);
 				
         ObjectMapper mapper = new ObjectMapper();
-        
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		InputStream inputStream = new FileInputStream("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 		
@@ -178,15 +170,13 @@ public class TestBug18026 extends BasicJavaClientREST {
 		JsonNode contentAfter = mapper.readValue(strAfter, JsonNode.class);
 		
 		assertTrue("Buffered JSON document difference", contentBefore.equals(contentAfter));
-		
-	    // release client
-	    client.release();
 	}
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+	    client.release();
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

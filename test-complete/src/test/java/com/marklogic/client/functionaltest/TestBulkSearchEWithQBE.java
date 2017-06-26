@@ -26,12 +26,12 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.custommonkey.xmlunit.exceptions.XpathException;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -45,7 +45,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.document.DocumentWriteSet;
@@ -62,16 +61,13 @@ import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.QueryManager.QueryView;
 import com.marklogic.client.query.RawCombinedQueryDefinition;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
-import java.util.Map;
 
 public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 	private static final int BATCH_SIZE=100;
 	private static final String DIRECTORY ="/bulkSearch/";
 	private static String dbName = "TestBulkSearchQBEDB";
 	private static String [] fNames = {"TestBulkSearchQBEDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -79,77 +75,72 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
 		createRESTUserWithPermissions("usr1", "password",getPermissionNode("flexrep-eval",Capability.READ),getCollectionNode("http://permission-collections/"), "rest-writer","rest-reader" );
+		// create new connection for each test below
+		client = getDatabaseClientWithDigest("usr1", "password");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("usr1");
 	}
 
 	@Before
 	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
 		loadTxtDocuments();
 		loadXMLDocuments();
 		loadJSONDocuments();
 	}
-
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
-	}
-
+	
 	public void validateRecord(DocumentRecord record,Format type) {
-
 		assertNotNull("DocumentRecord should never be null", record);
 		assertNotNull("Document uri should never be null", record.getUri());
 		assertTrue("Document uri should start with " + DIRECTORY, record.getUri().startsWith(DIRECTORY));
 		assertEquals("All records are expected to be in same format", type, record.getFormat());
-		//        System.out.println(record.getMimetype());
-
 	}
+	
 	public void loadXMLDocuments() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException{
 		int count=1;
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			Document doc = this.getDocumentContent("This is so foo with a bar "+i);
 			Element childElement = doc.createElement("author");
 			childElement.appendChild(doc.createTextNode("rhiea"));
 			doc.getElementsByTagName("foo").item(0).appendChild(childElement);
 			writeset.add(DIRECTORY+"foo"+i+".xml", new DOMHandle(doc));
 
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 	}
-	public void loadTxtDocuments(){
+	
+	public void loadTxtDocuments() {
 		int count =1;
 		TextDocumentManager docMgr = client.newTextDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<101;i++){
+		for(int i =0;i<101;i++) {
 			writeset.add(DIRECTORY+"Textfoo"+i+".txt", new StringHandle().with("bar can be foo"+i));
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 	}
+	
 	public void loadJSONDocuments() throws KeyManagementException, NoSuchAlgorithmException, JsonProcessingException, IOException{
 		int count=1;	 
 		JSONDocumentManager docMgr = client.newJSONDocumentManager();
@@ -157,23 +148,24 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 
 		Map<String,String> map= new HashMap<>();
 
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			JsonNode jn = new ObjectMapper().readTree("{\"animal\":\"dog "+i+"\", \"says\":\"woof\"}");
 			JacksonHandle jh = new JacksonHandle();
 			jh.set(jn);
 			writeset.add(DIRECTORY+"dog"+i+".json",jh);
 			map.put(DIRECTORY+"dog"+i+".json", jn.toString());
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 			//	      System.out.println(jn.toString());
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 	}
+	
 	@Test
 	public void testBulkSearchQBEWithXMLResponseFormat() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException, XpathException {
 		int count;
@@ -196,14 +188,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		DocumentPage page;
 
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,dh);
 			if(pageNo >1){ 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				rec.getFormat();
 				validateRecord(rec,Format.XML);
@@ -214,15 +206,15 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 			Document resultDoc = dh.get();
 			assertXpathEvaluatesTo("xml", "string(//*[local-name()='result'][last()]//@*[local-name()='format'])", resultDoc);
 			assertEquals("document count", page.size(),count);
-			//			assertEquals("Page Number #",pageNo,page.getPageNumber());
+			
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage() &&  page.hasContent() );
+		} while(!page.isLastPage() &&  page.hasContent() );
 		assertEquals("page count is 5 ",5, page.getTotalPages());
 		assertTrue("Page has previous page ?",page.hasPreviousPage());
 		assertEquals("page size", 25,page.getPageSize());
 		assertEquals("document count", 102,page.getTotalSize());
-
 	}
+	
 	@Test
 	public void testBulkSearchQBEWithJSONResponseFormat() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException {
 		int count;
@@ -245,10 +237,10 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		DocumentPage page;
 
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,sh);
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
@@ -263,14 +255,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 			assertEquals("document count", page.size(),count);
 			//			assertEquals("Page Number #",pageNo,page.getPageNumber());
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage() &&  page.hasContent() );
+		} while(!page.isLastPage() &&  page.hasContent());
 
 		assertEquals("page count is  ",5,page.getTotalPages());
 		assertTrue("Page has previous page ?",page.hasPreviousPage());
 		assertEquals("page size", 25,page.getPageSize());
 		assertEquals("document count", 102,page.getTotalSize());
-
 	}
+	
 	@Test
 	public void testBulkSearchQBECombinedQuery() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException, XpathException {
 		int count;
@@ -311,14 +303,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		DocumentPage page;
 
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,dh);
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				validateRecord(rec,Format.XML);
 				count++;
@@ -328,14 +320,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 			assertEquals("document count", page.size(),count);
 			//			assertEquals("Page Number #",pageNo,page.getPageNumber());
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage() &&  page.hasContent() );
+		} while(!page.isLastPage() &&  page.hasContent());
 
 		assertEquals("page count is  ",5,page.getTotalPages());
 		assertTrue("Page has previous page ?",page.hasPreviousPage());
 		assertEquals("page size", 25,page.getPageSize());
 		assertEquals("document count", 102,page.getTotalSize());
-
 	}
+	
 	@Test
 	public void testBulkSearchQBEWithJSONCombinedQuery() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException {
 		int count;
@@ -360,14 +352,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		DocumentPage page;
 
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,sh);
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				rec.getFormat();
 				validateRecord(rec,Format.JSON);
@@ -376,13 +368,12 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 			assertTrue("Page start in results and on page",sh.get().get("start").asLong() == page.getStart());
 			assertEquals("document count", page.size(),count);
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage() &&  page.hasContent() );
+		} while(!page.isLastPage() &&  page.hasContent());
 		System.out.println(sh.get().toString());
 		assertEquals("page count is  ",5,page.getTotalPages());
 		assertTrue("Page has previous page ?",page.hasPreviousPage());
 		assertEquals("page size", 25,page.getPageSize());
 		assertEquals("document count", 102,page.getTotalSize());
-
 	}
 	
 	/*
@@ -412,14 +403,14 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 		DocumentPage page;
 
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,sh);
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				rec.getFormat();
 				validateRecord(rec,Format.JSON);
@@ -429,7 +420,7 @@ public class TestBulkSearchEWithQBE extends BasicJavaClientREST{
 			
 			assertEquals("document count", page.size(),count);
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage() &&  page.hasContent() );
+		} while(!page.isLastPage() &&  page.hasContent());
 		
 		ObjectMapper mapper = new ObjectMapper();
 		JsonParser  jsonParser = sh.get();

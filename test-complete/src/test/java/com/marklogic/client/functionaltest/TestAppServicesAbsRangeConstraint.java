@@ -32,23 +32,23 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesAbsRangeConstraint extends BasicJavaClientREST  {
 
-	
 	private static String dbName = "AbsRangeConstraintDB";
 	private static String [] fNames = {"AbsRangeConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
-@BeforeClass
+    @BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test
@@ -58,12 +58,9 @@ public class TestAppServicesAbsRangeConstraint extends BasicJavaClientREST  {
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "absRangeConstraintWithVariousGrammarAndWordQueryOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/abs-range-constraint/", "XML");
 		}
 		
@@ -88,20 +85,14 @@ public class TestAppServicesAbsRangeConstraint extends BasicJavaClientREST  {
 		assertXpathEvaluatesTo("5", "string(//*[local-name()='result'][1]//*[local-name()='popularity'])", resultDoc);
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='facet-value']//@*[local-name()='count'])", resultDoc);
 		assertXpathEvaluatesTo("High", "string(//*[local-name()='facet-value'])", resultDoc);
-	    
-		//String expectedSearchReport = "(cts:search(fn:collection(), cts:and-query((cts:or-query((cts:element-range-query(fn:QName(\"\", \"popularity\"), \"&gt;=\", xs:int(\"5\"), (), 1), cts:and-query((cts:element-range-query(fn:QName(\"\", \"popularity\"), \"&gt;=\", xs:int(\"3\"), (), 1), cts:element-range-query(fn:QName(\"\", \"popularity\"), \"&lt;\", xs:int(\"5\"), (), 1)), ()))), cts:element-attribute-range-query(fn:QName(\"http://cloudbank.com\", \"price\"), fn:QName(\"\", \"amt\"), \"&gt;=\", 3.0, (), 1), cts:element-attribute-range-query(fn:QName(\"http://cloudbank.com\", \"price\"), fn:QName(\"\", \"amt\"), \"&lt;\", 14.0, (), 1), cts:element-word-query(fn:QName(\"\", \"title\"), \"served\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\"), 1))[1 to 10]";
-		
-		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-//		super.tearDown();
 	}
 }

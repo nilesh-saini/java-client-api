@@ -22,10 +22,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-
-import java.io.InputStream;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -33,17 +32,13 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.pojo.PojoPage;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -69,33 +64,22 @@ public class TestAutomatedPathRangeIndex extends BasicJavaClientREST {
 	private static String dbName = "TestAutomatedPathRangeIndexDB";
 	private static String[] fNames = { "TestAutomatedPathRangeIndexDB-1" };
 	
-	private DatabaseClient client;
-	
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {		
 		System.out.println("In setup");
-		configureRESTServer(dbName, fNames);
-		//
-		BasicJavaClientREST.addRangePathIndex(dbName, "long", "com.marklogic.client.functionaltest.ArtifactIndexedOnInteger/inventory", "", "reject",true);
-
+		configureRESTServer(dbName, fNames);		
+		addRangePathIndex(dbName, "long", "com.marklogic.client.functionaltest.ArtifactIndexedOnInteger/inventory", "", "reject",true);
+		client = getDatabaseClientWithDigest("admin", "admin");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down");	    
-		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws Exception {		
-		client = getDatabaseClient("admin", "admin", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		 //release client
+		System.out.println("In tear down");
+		//release client
 		 client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
 	
 	/*

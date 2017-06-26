@@ -33,23 +33,22 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
 public class TestAppServicesConstraintCombination extends BasicJavaClientREST {
 
-//	private String serverName = "";
 	private static String dbName = "AppServicesConstraintCombinationDB";
 	private static String [] fNames = {"AppServicesConstraintCombinationDB-1"};
-	
+	private static DatabaseClient client = null;	
 
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 @After
 public  void testCleanUp() throws Exception
@@ -65,12 +64,9 @@ public  void testCleanUp() throws Exception
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "appservicesConstraintCombinationOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/appservices-combination-constraint/", "XML");
 		}
 		
@@ -94,10 +90,7 @@ public  void testCleanUp() throws Exception
 	    
 		//String expectedSearchReport = "(cts:search(fn:collection(), cts:and-query((cts:element-value-query(fn:QName(\"\", \"id\"), \"00*2\", (\"lang=en\"), 1), cts:element-range-query(fn:QName(\"http://purl.org/dc/elements/1.1/\", \"date\"), \"=\", xs:date(\"2006-02-02\"), (), 1)), ()), (\"score-logtfidf\"), 1))[1 to 10]";
 		
-		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
 @Test	
@@ -111,8 +104,6 @@ public  void testCleanUp() throws Exception
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "appservicesConstraintCombinationOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 	    // create and initialize a handle on the metadata
 	    DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -157,16 +148,15 @@ public  void testCleanUp() throws Exception
 	    
 		//String expectedSearchReport = "(cts:search(fn:collection(), cts:and-query((cts:collection-query(\"http://test.com/set1\"), cts:collection-query(\"http://test.com/set5\"), cts:not-query(cts:element-word-query(fn:QName(\"\", \"title\"), \"memex\", (\"lang=en\"), 1), 1)), ()), (\"score-logtfidf\"), 1))[1 to 10]";
 		
-		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+		//assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
+
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-//		super.tearDown();
 	}
 }

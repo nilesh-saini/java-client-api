@@ -16,35 +16,41 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
-
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.document.TextDocumentManager;
 import com.marklogic.client.io.StringHandle;
-import org.junit.*;
 public class TestWriteTextDoc extends BasicJavaClientREST
 {
+	private static String hostname = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
+		loadGradleProperties();
 		setupJavaRESTServerWithDB( "REST-Java-Client-API-Server-withDB", 8015);
-
+		hostname = getRestServerHostName();
 	}
 
 	@Test  
 	public void testWriteTextDoc()  
 	{
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", 8015, "admin", "admin", Authentication.DIGEST);
+		DatabaseClient client = DatabaseClientFactory.newClient(hostname, 8015, new DigestAuthContext("admin", "admin"));
 
 		String docId = "/foo/test/myFoo.txt";
 		TextDocumentManager docMgr = client.newTextDocumentManager();
 		docMgr.write(docId, new StringHandle().with("This is so foo"));
 		assertEquals("Text document write difference", "This is so foo", docMgr.read(docId, new StringHandle()).get());
+		// release the client
+		client.release();
 	}
 	
 	@AfterClass	

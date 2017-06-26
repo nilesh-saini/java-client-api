@@ -25,15 +25,13 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.BinaryDocumentManager;
@@ -49,7 +47,6 @@ import com.marklogic.client.io.DocumentMetadataHandle.DocumentPermissions;
 import com.marklogic.client.io.DocumentMetadataHandle.DocumentProperties;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.Format;
-import java.util.Map;
 
 public class TestBulkWriteWithTransactions extends BasicJavaClientREST {
 
@@ -58,35 +55,28 @@ public class TestBulkWriteWithTransactions extends BasicJavaClientREST {
 	private static String dbName = "TestBulkWriteWithTransactionDB";
 	private static String [] fNames = {"TestBulkWriteWithTransactionDB-1"};
 	
+	private static DatabaseClient client = null;
 	
-	private  DatabaseClient client ;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In Setup");
 		configureRESTServer(dbName, fNames);
 		createRESTUser("app-user", "password","rest-writer","rest-reader","flexrep-eval"  );
 		createRESTUserWithPermissions("usr1", "password",getPermissionNode("flexrep-eval",Capability.READ),getCollectionNode("http://permission-collections/"), "rest-writer","rest-reader" );
-		
+		// create new connection for each test below
+		client = getDatabaseClientWithDigest("usr1", "password");		
 	}
+	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("app-user");
 		deleteRESTUser("usr1");
 	}
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-
-		// create new connection for each test below
-		client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
-	}
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
-	}
+	
 	public DocumentMetadataHandle setMetadata(){
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
@@ -100,6 +90,7 @@ public class TestBulkWriteWithTransactions extends BasicJavaClientREST {
 		metadataHandle.setQuality(23);
 		return	metadataHandle;
 	}
+	
 	public void validateMetadata(DocumentMetadataHandle mh){
 
 		// get metadata values
@@ -135,6 +126,7 @@ public class TestBulkWriteWithTransactions extends BasicJavaClientREST {
 		assertTrue("Document collections difference", expectedCollections.contains(actualCollections[2]));
 
 	}	
+	
 	public void validateDefaultMetadata(DocumentMetadataHandle mh){
 
 		// get metadata values
@@ -156,9 +148,8 @@ public class TestBulkWriteWithTransactions extends BasicJavaClientREST {
 
 		assertTrue("Document collections difference", expectedCollections.contains(actualCollections[0]));
 		assertTrue("Document collections difference", expectedCollections.contains(actualCollections[1]));
-		
-		//	    System.out.println(actualPermissions);
 	}
+	
 	public void validateRecord(DocumentRecord record,Format type) {
 
 		assertNotNull("DocumentRecord should never be null", record);
@@ -177,37 +168,38 @@ public void testBulkWritewithTransactionCommit() throws KeyManagementException, 
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		Map<String,String> map= new HashMap<>();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			writeset.add(DIRECTORY+"first"+i+".xml", new DOMHandle(getDocumentContent("This is so first"+i)));
 			map.put(DIRECTORY+"first"+i+".xml", convertXMLDocumentToString(getDocumentContent("This is so first"+i)));
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset,t);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset,t);
 		}
 		String uris[] = new String[102];
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			uris[i]=DIRECTORY+"first"+i+".xml";
 		}
 		try{t.commit();
 		count=0;
 		DocumentPage page = docMgr.read(uris);
 		DOMHandle dh = new DOMHandle();
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			validateRecord(rec,Format.XML);
 			rec.getContent(dh);
 			assertEquals("Comparing the content :",map.get(rec.getUri()),convertXMLDocumentToString(dh.get()));
 			count++;
 		}
-		}catch(Exception e)
-		{System.out.println(e.getMessage());throw e;}
+		} 
+		catch(Exception e) {
+			System.out.println(e.getMessage());throw e;
+		}
 		assertEquals("document count", 102,count); 
-
 	}
 	/*
 	 * This test is trying to bulk insert documents with transaction open and not commited and try to read documents before commit.
@@ -216,14 +208,14 @@ public void testBulkWritewithTransactionCommit() throws KeyManagementException, 
 public void testBulkWritewithTransactionsNoCommit() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		int count=1;boolean tstatus =true;
 		Transaction t1 = client.openTransaction();
-		try{ 
+		try { 
 			XMLDocumentManager docMgr = client.newXMLDocumentManager();
 			Map<String,String> map= new HashMap<>();
 			DocumentWriteSet writeset =docMgr.newWriteSet();
-			for(int i =0;i<102;i++){
+			for(int i =0;i<102;i++) {
 				writeset.add(DIRECTORY+"bar"+i+".xml", new DOMHandle(getDocumentContent("This is so foo"+i)));
 				map.put(DIRECTORY+"bar"+i+".xml", convertXMLDocumentToString(getDocumentContent("This is so foo"+i)));
-				if(count%BATCH_SIZE == 0){
+				if(count%BATCH_SIZE == 0) {
 					docMgr.write(writeset,t1);
 					writeset = docMgr.newWriteSet();
 				}
@@ -233,14 +225,14 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 				docMgr.write(writeset,t1);
 			}
 			String uris[] = new String[102];
-			for(int i =0;i<102;i++){
+			for(int i =0;i<102;i++) {
 				uris[i]=DIRECTORY+"bar"+i+".xml";
 			}
 
 			count=0;
 			DocumentPage page = docMgr.read(t1,uris);
 			DOMHandle dh = new DOMHandle();
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				validateRecord(rec,Format.XML);
 				rec.getContent(dh);
@@ -254,7 +246,7 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 			count=0;
 			page = docMgr.read(uris);
 			dh = new DOMHandle();
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				validateRecord(rec,Format.XML);
 				rec.getContent(dh);
@@ -264,7 +256,7 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 
 			assertEquals("document count", 0,count);
 		
-		}catch(Exception e){
+		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			tstatus=true;
 			throw e;
@@ -279,46 +271,46 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 		int count=1;
 		boolean tstatus =true;
 		Transaction t1 = client.openTransaction();
-		try{ 
+		try { 
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		Map<String,String> map= new HashMap<>();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			writeset.add(DIRECTORY+"sec"+i+".xml", new DOMHandle(getDocumentContent("This is so sec"+i)));
 			map.put(DIRECTORY+"sec"+i+".xml", convertXMLDocumentToString(getDocumentContent("This is so sec"+i)));
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 		count=1;
 		Map<String,String> map2= new HashMap<>();
 		DocumentMetadataHandle mh = setMetadata();
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			writeset.add(DIRECTORY+"sec"+i+".xml",mh, new DOMHandle(getDocumentContent("This is with metadata"+i)));
 			map2.put(DIRECTORY+"sec"+i+".xml", convertXMLDocumentToString(getDocumentContent("This is with metadata"+i)));
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset,t1);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset,t1);
 		}
 		String uris[] = new String[102];
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			uris[i]=DIRECTORY+"sec"+i+".xml";
 		}
 		count=0;
 		DocumentPage page = docMgr.read(t1,uris);
 		DOMHandle dh = new DOMHandle();
 		DocumentMetadataHandle mh2 = new DocumentMetadataHandle();
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			validateRecord(rec,Format.XML);
 			rec.getContent(dh);
@@ -334,7 +326,7 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 		page = docMgr.read(uris);
 		dh = new DOMHandle();
 		mh2 = new DocumentMetadataHandle();
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			validateRecord(rec,Format.XML);
 			rec.getContent(dh);
@@ -345,43 +337,42 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 		}
 		assertEquals("document count", 102,count); 
 		
-		}catch(Exception e){
+		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			tstatus=true;
 			throw e;
-		}finally{
-			if(tstatus){
+		} finally {
+			if(tstatus) {
 				t1.rollback();
 			}
 		}
-	
 	}
 
 @Test public void testBulkWritewithMetadataTransactioninDiffClientConnection() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 
 	int count=1;
 	boolean tstatus =true;
-	DatabaseClient c = getDatabaseClient("usr1", "password", Authentication.DIGEST);
+	DatabaseClient c = getDatabaseClientWithDigest("usr1", "password");
 	Transaction t1 = client.openTransaction();
 	try{ 
 	XMLDocumentManager docMgr = client.newXMLDocumentManager();
 	Map<String,String> map= new HashMap<>();
 	DocumentWriteSet writeset =docMgr.newWriteSet();
 	DocumentMetadataHandle mh = setMetadata();
-	for(int i =0;i<102;i++){
+	for(int i =0;i<102;i++) {
 		writeset.add(DIRECTORY+"third"+i+".xml",mh, new DOMHandle(getDocumentContent("This is third"+i)));
 		map.put(DIRECTORY+"third"+i+".xml", convertXMLDocumentToString(getDocumentContent("This is third"+i)));
-		if(count%BATCH_SIZE == 0){
+		if(count%BATCH_SIZE == 0) {
 			docMgr.write(writeset,t1);
 			writeset = docMgr.newWriteSet();
 		}
 		count++;
 	}
-	if(count%BATCH_SIZE > 0){
+	if(count%BATCH_SIZE > 0) {
 		docMgr.write(writeset,t1);
 	}
 	String uris[] = new String[102];
-	for(int i =0;i<102;i++){
+	for(int i =0;i<102;i++) {
 		uris[i]=DIRECTORY+"third"+i+".xml";
 	}
 	count=0;
@@ -389,7 +380,7 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 	DocumentPage page = dMgr.read(t1,uris);
 	DOMHandle dh = new DOMHandle();
 	DocumentMetadataHandle mh2 = new DocumentMetadataHandle();
-	while(page.hasNext()){
+	while(page.hasNext()) {
 		DocumentRecord rec = page.next();
 		validateRecord(rec,Format.XML);
 		rec.getContent(dh);
@@ -402,17 +393,17 @@ public void testBulkWritewithTransactionsNoCommit() throws KeyManagementExceptio
 	t1.commit();
 	tstatus=false;
 	
-	}catch(Exception e){
+	} catch(Exception e) {
 		System.out.println(e.getMessage());
 		tstatus=true;
 		throw e;
-	}finally{
-		if(tstatus){
+	}
+	finally {
+		if(tstatus) {
 			t1.rollback();
 		}
 		c.release();
 	}
-
 }
 
 @Test (expected = FailedRequestException.class)
@@ -428,26 +419,26 @@ public void testBulkWritewithTransactionCommitTimeOut() throws KeyManagementExce
 	File file1= null;
 	file1 = new File("src/test/java/com/marklogic/client/functionaltest/data/" + docId[0]);
 	FileHandle h1 = new FileHandle(file1);
-	for(int i =0;i<102;i++){
+	for(int i =0;i<102;i++) {
 		writeset.add(DIRECTORY+"binary"+i+".jpg", h1);
-		if(count%BATCH_SIZE == 0){
+		if(count%BATCH_SIZE == 0) {
 			docMgr.write(writeset,t);
 			writeset = docMgr.newWriteSet();
 		}
 		count++;
 	}
-	if(count%BATCH_SIZE > 0){
+	if(count%BATCH_SIZE > 0) {
 		docMgr.write(writeset,t);
 	}
 	t.commit();
 	String uris[] = new String[102];
-	for(int i =0;i<102;i++){
+	for(int i =0;i<102;i++) {
 		uris[i]=DIRECTORY+"binary"+i+".jpg";
 	}
 	count=0;
 	FileHandle rh = new FileHandle();
 	DocumentPage page = docMgr.read(uris);
-	while(page.hasNext()){
+	while(page.hasNext()) {
 		DocumentRecord rec = page.next();
 		validateRecord(rec,Format.BINARY);
 		rec.getContent(rh);
@@ -533,5 +524,4 @@ public void testBulkWritewithTransactionCommitTimeOut() throws KeyManagementExce
 			}
 		}
 	}
-
 }

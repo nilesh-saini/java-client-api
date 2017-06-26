@@ -23,15 +23,12 @@ import static org.junit.Assert.assertTrue;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.pojo.PojoPage;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -45,40 +42,30 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 
 	private static String dbName = "TestPOJOQueryBuilderValueSearchDB";
 	private static String [] fNames = {"TestPOJOQueryBuilderValueSearchDB-1"};
-
-
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
 
 	public Artifact getArtifact(int counter) {
 
 		Artifact cogs = new Artifact();
 		cogs.setId(counter);
-		if( counter % 5 == 0){
+		if( counter % 5 == 0) {
 			cogs.setName("Cogs special");
-			if(counter % 2 ==0){
+			if(counter % 2 ==0) {
 				Company acme = new Company();
 				acme.setName("Acme special, Inc.");
 				acme.setWebsite("http://www.acme special.com");
@@ -86,7 +73,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 				acme.setLongitude(-87.966+counter);
 				cogs.setManufacturer(acme);
 
-			}else{
+			} else {
 				Company widgets = new Company();
 				widgets.setName("Widgets counter Inc.");
 				widgets.setWebsite("http://www.widgets counter.com");
@@ -94,9 +81,9 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 				widgets.setLongitude(-87.966+counter);
 				cogs.setManufacturer(widgets);
 			}
-		}else{
+		} else {
 			cogs.setName("Cogs "+counter);
-			if(counter % 2 ==0){
+			if(counter % 2 ==0) {
 				Company acme = new Company();
 				acme.setName("Acme "+counter+", Inc.");
 				acme.setWebsite("http://www.acme"+counter+".com");
@@ -104,7 +91,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 				acme.setLongitude(-87.966+counter);
 				cogs.setManufacturer(acme);
 
-			}else{
+			} else {
 				Company widgets = new Company();
 				widgets.setName("Widgets "+counter+", Inc.");
 				widgets.setWebsite("http://www.widgets"+counter+".com");
@@ -155,7 +142,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 		do {
 			count = 0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				Artifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -163,7 +150,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<p.getTotalSize());
 		assertEquals("page number after the loop",5,p.getPageNumber());
 		assertEquals("total no of pages",5,p.getTotalPages());
 		assertEquals("page length from search handle",5,jh.get().path("page-length").asInt());
@@ -186,10 +173,10 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 
 		System.out.println(jh.get().toString());
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				Artifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -199,7 +186,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		assertEquals("page length from search handle",5,jh.get().path("results").size());
 	}
 
@@ -223,10 +210,10 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 		assertEquals("total no of pages",0,p.getTotalPages());
 
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				Artifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -235,7 +222,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		assertEquals("page number after the loop",1,p.getPageNumber());
 		assertEquals("total no of pages",0,p.getTotalPages());
 		assertEquals("page length from search handle",5,jh.get().path("page-length").asInt());
@@ -257,10 +244,10 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 		assertEquals("total no of pages",5,p.getTotalPages());
 
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo);
-			while(p.hasNext()){
+			while(p.hasNext()) {
 				Artifact a =p.next();
 				validateArtifact(a);
 				assertTrue("Verifying document id is part of the search ids",a.getId()%5==0);
@@ -270,7 +257,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 			}
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		assertEquals("page number after the loop",5,p.getPageNumber());
 		assertEquals("total no of pages",5,p.getTotalPages());
 		assertEquals("page length from search handle",5,jh.get().path("page-length").asInt());
@@ -296,7 +283,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 		System.out.println(jh.get().toString()+ p.getTotalPages());
 
 		long pageNo=1,count=0;
-		do{
+		do {
 			count =0;
 			p = products.search(qd,pageNo,jh);
 			while(p.hasNext()){
@@ -309,7 +296,7 @@ public class TestPOJOQueryBuilderValueQuery extends BasicJavaClientREST {
 			System.out.println(jh.get().toString());
 			assertEquals("Page size",count,p.size());
 			pageNo=pageNo+p.getPageSize();
-		}while(!p.isLastPage() && pageNo<=p.getTotalSize());
+		} while(!p.isLastPage() && pageNo<=p.getTotalSize());
 		System.out.println( p.getPageNumber());
 		assertEquals("page length from search handle",5,jh.get().path("page-length").asInt());
 	}

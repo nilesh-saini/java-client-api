@@ -24,18 +24,16 @@ import java.io.FileInputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.document.GenericDocumentManager;
@@ -48,7 +46,6 @@ import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.InputStreamHandle;
-import java.util.Map;
 /*
  * This test is intended for 
  * looping eval query for more than 100 times
@@ -58,34 +55,31 @@ import java.util.Map;
 public class TestEvalwithRunTimeDBnTransactions extends BasicJavaClientREST {
 	private static String dbName = "TestEvalXqueryWithTransDB";
 	private static String [] fNames = {"TestEvalXqueryWithTransDB-1"};
-		
-	private  DatabaseClient client ;
+	private  static DatabaseClient client;
+	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		 System.out.println("In setup");
 		 configureRESTServer(dbName, fNames);
  	     createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke");
  	     createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
+ 	    client = getDatabaseClientWithDigest("eval-user", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("eval-user");
 		deleteUserRole("test-eval");
 	}
 
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("eval-user", "x", Authentication.DIGEST);
-	}
-
 	@After
 	public void tearDown() throws Exception {
-		clearDB();
-		client.release();
+		clearDB();		
 	}
+	
 // loop the eval query more than 150 times and should not stuck
 	@Test
 	public void test1MultipleEvalQueries() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -129,6 +123,7 @@ public class TestEvalwithRunTimeDBnTransactions extends BasicJavaClientREST {
 		    fis.close();	
 		}
 	}
+	
 	//issue 170 are blocking the test progress in here
 	@Test
 	public void test2XqueryEvalTransactions() throws KeyManagementException, NoSuchAlgorithmException, Exception{
@@ -171,20 +166,21 @@ public class TestEvalwithRunTimeDBnTransactions extends BasicJavaClientREST {
 			}
 		}
 }
+	
 	//issue 171 are blocking the test progress in here
-		@Test
-		public void test3XqueryEvalTransactionsWithRunTimeDB() throws KeyManagementException, NoSuchAlgorithmException, Exception{
-			int count=1;
-			boolean tstatus =true;
-			
-			String [] fNamesTmp = {"test3XqueryEvalDB-1"};
-			String dbNameTmp = "test3XqueryEvalDB";
-			
-			configureRESTServer(dbNameTmp, fNamesTmp);
-			
-			DatabaseClient client2 = getDatabaseClient("eval-user", "x", Authentication.DIGEST);
-			Transaction t1 = client2.openTransaction();
-			try { 
+	@Test
+	public void test3XqueryEvalTransactionsWithRunTimeDB() throws KeyManagementException, NoSuchAlgorithmException, Exception{
+		int count=1;
+		boolean tstatus =true;
+
+		String [] fNamesTmp = {"test3XqueryEvalDB-1"};
+		String dbNameTmp = "test3XqueryEvalDB";
+
+		configureRESTServer(dbNameTmp, fNamesTmp);
+
+		DatabaseClient client2 = getDatabaseClientWithDigest("eval-user", "x");
+		Transaction t1 = client2.openTransaction();
+		try { 
 			XMLDocumentManager docMgr = client2.newXMLDocumentManager();
 			Map<String,String> map= new HashMap<>();
 			DocumentWriteSet writeset =docMgr.newWriteSet();
@@ -200,27 +196,27 @@ public class TestEvalwithRunTimeDBnTransactions extends BasicJavaClientREST {
 			if(count%100 > 0) {
 				docMgr.write(writeset,t1);
 			}
-			 String query = "declare variable $myInteger as xs:integer external;"
-			    		+ "(fn:count(fn:doc()))";
-			 ServerEvaluationCall evl= client2.newServerEval().xquery(query);
-		     EvalResultIterator evr = evl.eval();
-		     assertEquals("Count of documents outside of the transaction",0,evr.next().getNumber().intValue());
-		     evl= client2.newServerEval().xquery(query).transaction(t1);
-		     evr = evl.eval();
-		     assertEquals("Count of documents outside of the transaction",102,evr.next().getNumber().intValue());
+			String query = "declare variable $myInteger as xs:integer external;"
+					+ "(fn:count(fn:doc()))";
+			ServerEvaluationCall evl= client2.newServerEval().xquery(query);
+			EvalResultIterator evr = evl.eval();
+			assertEquals("Count of documents outside of the transaction",0,evr.next().getNumber().intValue());
+			evl= client2.newServerEval().xquery(query).transaction(t1);
+			evr = evl.eval();
+			assertEquals("Count of documents outside of the transaction",102,evr.next().getNumber().intValue());
+		}
+		catch(Exception e) {
+			System.out.println(e.getMessage());
+			tstatus=true;
+			throw e;
+		}
+		finally {
+			if(tstatus) {
+				t1.rollback();
+				client2.release();
 			}
-			catch(Exception e) {
-				System.out.println(e.getMessage());
-				tstatus=true;
-				throw e;
-			}
-			finally {
-				if(tstatus) {
-					t1.rollback();
-					client2.release();
-				}
-				cleanupRESTServer(dbNameTmp, fNamesTmp);
-				associateRESTServerWithDB(getRestServerName(),"Documents");
-			}
+			cleanupRESTServer(dbNameTmp, fNamesTmp);
+			associateRESTServerWithDB(getRestServerName(),"Documents");
+		}
 	}
 }

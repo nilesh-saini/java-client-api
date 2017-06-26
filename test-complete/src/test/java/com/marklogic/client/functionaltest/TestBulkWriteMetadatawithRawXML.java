@@ -28,11 +28,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -40,7 +39,6 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
@@ -61,7 +59,6 @@ import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.SourceHandle;
 import com.marklogic.client.io.StringHandle;
-import javax.xml.transform.Source;
 /**
  * @author skottam
  * This test is test the DocumentWriteSet function 
@@ -78,8 +75,8 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	private static String dbName = "TestBulkWriteDefaultMetadataDB3";
 	private static String [] fNames = {"TestBulkWriteDefaultMetadataDB-3"};
 	
+	private static DatabaseClient client = null;
 	
-	private  DatabaseClient client ;
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -89,6 +86,8 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 		  configureRESTServer(dbName, fNames);
 		  createRESTUser("app-user", "password","rest-writer","rest-reader"  );
 		  createRESTUserWithPermissions("usr1", "password",getPermissionNode("flexrep-eval",Capability.READ),getCollectionNode("http://permission-collections/"), "rest-writer","rest-reader" );
+		  // create new connection for each test below
+		  client = getDatabaseClientWithDigest("usr1", "password");
 	}
 
 	/**
@@ -96,29 +95,12 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+    	client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("app-user");
 		deleteRESTUser("usr1");
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		  client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-    	// release client
-    	client.release();
 	}
 	
 	public DocumentMetadataHandle setMetadata(){
@@ -134,6 +116,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    metadataHandle.setQuality(23);
 	    return	metadataHandle;
 	}
+	
 	public void validateMetadata(DocumentMetadataHandle mh){
 
 	    // get metadata values
@@ -142,7 +125,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    DocumentCollections collections = mh.getCollections();
 	    
 	    // Properties
-	   // String expectedProperties = "size:5|reviewed:true|myInteger:10|myDecimal:34.56678|myCalendar:2014|myString:foo|";
+	    // String expectedProperties = "size:5|reviewed:true|myInteger:10|myDecimal:34.56678|myCalendar:2014|myString:foo|";
 	    String actualProperties = getDocumentPropertiesString(properties);
 	    boolean result = actualProperties.contains("size:5|");
 	    assertTrue("Document properties count", result);
@@ -165,9 +148,9 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    
 	    assertTrue("Document collections difference in size value", actualCollections.contains("size:2"));
 	   	assertTrue("my-collection1 not found", actualCollections.contains("my-collection1"));
-	   	assertTrue("my-collection2 not found", actualCollections.contains("my-collection2"));	  
-	    
+	   	assertTrue("my-collection2 not found", actualCollections.contains("my-collection2"));   
 	}
+	
 	public void validateDefaultMetadata(DocumentMetadataHandle mh){
 
 	    // get metadata values
@@ -189,6 +172,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    assertTrue("Document collections difference in size value", actualCollections.contains("size:1"));
 	   	assertTrue("my-collection1 not found", actualCollections.contains("http://permission-collections/"));
 	}
+	
 	@Test  
 	public void testWriteMultipleTextDocWithXMLMetadata() throws KeyManagementException, NoSuchAlgorithmException, Exception
 	  {
@@ -216,7 +200,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	   
 	    DocumentPage page = docMgr.read(docId);
 	    DOMHandle mh= new DOMHandle();
-	    while(page.hasNext()){
+	    while(page.hasNext()) {
 	    	DocumentRecord rec = page.next();
 	    	docMgr.readMetadata(rec.getUri(), mh);
 	    	 Document docReadMetadata = mh.get();
@@ -225,7 +209,6 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	 	    assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='Author'])", docReadMetadata);
 	    }
 	   
-	  
 	    //Adding document specific properties in document set2
 	        	
 	    	writeset =docMgr.newWriteSet();
@@ -248,17 +231,16 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 		    rec = page.next();
 		    docMgr.readMetadata(rec.getUri(), mh2);
 		    validateMetadata(mh2);
-		    
-		    
+		    		    
 		    page = docMgr.read(docId[5]);
 		    rec = page.next();
 		    docMgr.readMetadata(rec.getUri(), mh);
 	    	Document docReadMetadata = mh.get();
 	    	assertXpathEvaluatesTo("coll1", "string(//*[local-name()='collection'][1])", docReadMetadata);
 	 	    assertXpathEvaluatesTo("coll2", "string(//*[local-name()='collection'][2])", docReadMetadata);
-	 	    assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='Author'])", docReadMetadata);	 
-			 
+	 	    assertXpathEvaluatesTo("MarkLogic", "string(//*[local-name()='Author'])", docReadMetadata);	
 	  }
+	
 	@Test  
 	public void testWriteMultipleXMLDocWithXMLMetadata() throws KeyManagementException, NoSuchAlgorithmException, Exception  
 	  {  
@@ -289,7 +271,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    DocumentRecord rec;
 	    Document docReadMetadata =null;
 	    DOMHandle mh= new DOMHandle();
-	    while(page.hasNext()){
+	    while(page.hasNext()) {
 	    	rec = page.next();
 	    	docMgr.readMetadata(rec.getUri(), mh);
 	    	docReadMetadata = mh.get();
@@ -329,20 +311,17 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 		 page = docMgr.read(docId[5]);
 		 rec = page.next();
 		 docMgr.readMetadata(rec.getUri(), mh2);
-		 validateMetadata(mh2);
-		
+		 validateMetadata(mh2);		
 	  }
-	
 	
 	/*
 	 * This is test is made up for the github issue 41
 	 */
 @Test
 	public void testWriteMultipleJSONDocsWithRawJSONMetadata() throws KeyManagementException, NoSuchAlgorithmException, Exception  
-	  {
+    {
 		// Synthesize input content
         
-	
 		StringHandle doc1 = new StringHandle(
                 "{\"number\": 1}").withFormat(Format.JSON);
         StringHandle doc2 = new StringHandle(
@@ -432,8 +411,7 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 	    page = jdm.read("doc5.json");
 	    rec = page.next();
 	    jdm.readMetadata(rec.getUri(), mh);
-	    assertEquals("default quality",20,mh.getQuality());
-	    
+	    assertEquals("default quality",20,mh.getQuality());	    
 	  }
 /*
  * Git Issue #24 is tested here
@@ -529,5 +507,4 @@ public class TestBulkWriteMetadatawithRawXML extends  BasicJavaClientREST{
 						.toString());
 		sh.close();
 	}
-
 }

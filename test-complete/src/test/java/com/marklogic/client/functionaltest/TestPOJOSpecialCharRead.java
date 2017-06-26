@@ -21,19 +21,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.pojo.PojoPage;
 import com.marklogic.client.pojo.PojoRepository;
@@ -52,11 +47,8 @@ import com.marklogic.client.query.StringQueryDefinition;
 public class TestPOJOSpecialCharRead extends BasicJavaClientREST {
 	private static String dbName = "TestPOJOSpecialCharSearchDB";
 	private static String [] fNames = {"TestPOJOSpecialCharSearchDB-1"};
-	
-
 	private long negativeId = -1L;
-	
-	private  DatabaseClient client;
+	private static DatabaseClient client = null;
 
 	/*
 	 * This class is similar to the Artifact class. It is used to test special characters using the name field
@@ -191,23 +183,17 @@ public class TestPOJOSpecialCharRead extends BasicJavaClientREST {
 	public static void setUpBeforeClass() throws Exception {		
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-	@After
-	public void tearDown() throws Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
-
+	
 	public  long getNegativeId() {
 		return negativeId;
 	}
@@ -401,6 +387,7 @@ public class TestPOJOSpecialCharRead extends BasicJavaClientREST {
 		assertEquals(-87.966, artifact.getManufacturer().getLongitude(), 0.00);
 		assertEquals(41.998, artifact.getManufacturer().getLatitude(), 0.00);
 	}
+	
 	/*
 	 * This method is used when there is a need to validate multiple reads and searches.
 	 */
@@ -801,6 +788,7 @@ public class TestPOJOSpecialCharRead extends BasicJavaClientREST {
 		AnnotateByteArray artifact1 = pojoReposProductsString.read(testByteArray);
 		validateAnnotatedByteArray(artifact1, testByteArray, b);
 	}
+	
 	@Test
 	public void testPageClose() {
 		PojoRepository<AnnotateByteArray,byte[]> pojoReposProductsString = client.newPojoRepository(AnnotateByteArray.class, byte[].class);		

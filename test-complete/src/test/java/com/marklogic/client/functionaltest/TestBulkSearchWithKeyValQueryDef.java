@@ -26,7 +26,7 @@ public class TestBulkSearchWithKeyValQueryDef extends BasicJavaClientREST {
 	private static String [] fNames = {"TestBulkSearchKVDDB-1"};
 	
 	
-	private  DatabaseClient client ;
+	private  DatabaseClient client;
 /* this test is commented out until we make decision in Issue 88
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -38,7 +38,7 @@ public class TestBulkSearchWithKeyValQueryDef extends BasicJavaClientREST {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 				cleanupRESTServer(dbName, fNames);
 				deleteRESTUser("usr1");
 	}
@@ -46,7 +46,7 @@ public class TestBulkSearchWithKeyValQueryDef extends BasicJavaClientREST {
 	@Before
 	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {		
 		//		 create new connection for each test below
-		client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("usr1", "password");
 	}
 
 	@After

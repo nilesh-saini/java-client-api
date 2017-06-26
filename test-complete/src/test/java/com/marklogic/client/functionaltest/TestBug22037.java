@@ -33,17 +33,16 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryBuilder.Operator;
 import com.marklogic.client.query.StructuredQueryDefinition;
 public class TestBug22037 extends BasicJavaClientREST {
-
 	
 	private static String dbName = "TestBug22037DB";
 	private static String [] fNames = {"TestBug22037DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -51,6 +50,7 @@ public class TestBug22037 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -61,11 +61,8 @@ public class TestBug22037 extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "rangeConstraintIntOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/range-constraint/", "XML");
 		}
 		
@@ -82,18 +79,16 @@ public class TestBug22037 extends BasicJavaClientREST {
 		
 		// get the result
 		Document resultDoc = resultsHandle.get();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
 		
-		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);			
 	}
+
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

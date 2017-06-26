@@ -18,7 +18,8 @@
 package com.marklogic.client.functionaltest;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -37,7 +38,6 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -51,12 +51,14 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 	private static String dbName = "TestStructuredQueryDB";
 	private static String [] fNames = {"TestStructuredQueryDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass	
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 	
 	@After
@@ -72,8 +74,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -101,10 +101,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);	
 	}
 
 	@Test	
@@ -114,8 +111,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.json", "constraint2.json", "constraint3.json", "constraint4.json", "constraint5.json"};
 		String queryOptionName = "valueConstraintWildCardOpt.json";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -166,10 +161,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		// get the result
 		Document resultDoc2 = resultsHandle2.get();
 		System.out.println(convertXMLDocumentToString(resultDoc2));
-		assertXpathEvaluatesTo("5", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc2);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("5", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc2);	
 	}
 
 	@Test	
@@ -179,8 +171,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -212,9 +202,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -224,9 +211,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+		
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -259,9 +244,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0113", "string(//*[local-name()='result']//*[local-name()='id'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -271,8 +253,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -304,9 +284,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result']//*[local-name()='id'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -317,8 +294,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		String[] filenames1 = {"constraint1.xml", "constraint2.xml", "constraint3.xml"};
 		String[] filenames2 = {"constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -355,9 +330,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result']//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -368,9 +340,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		String[] filenames1 = {"constraint1.xml", "constraint2.xml", "constraint3.xml"};
 		String[] filenames2 = {"constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+		
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -407,9 +377,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -423,8 +390,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -474,10 +439,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);	
 	}
 
 	@Test	
@@ -487,8 +449,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "containerConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -516,10 +476,7 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-	
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);	
 	}
 	
 	/*
@@ -536,8 +493,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -606,8 +561,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		JsonNode nodeNeg = resultsNeg.get();
 		// Return 0 nodes
 		assertEquals("Number of results returned incorrect in response", "0", nodeNeg.path("total").asText());
-		// release client
-		client.release();		
 	}
 	
 	/*
@@ -624,8 +577,6 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintPopularityOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
@@ -696,13 +647,13 @@ public class TestStructuredQuery extends BasicJavaClientREST {
 		assertEquals("Number of results returned incorrect in response", "1", node2.path("total").asText());
 		assertEquals("Result returned incorrect in response", "/structured-query/constraint1.xml", node2.path("results").get(0).path("uri").asText());
 		assertEquals("Get Criteria returned incorrect in response", "Bush", strutdDef2.getCriteria());
-		// release client
-		client.release();		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

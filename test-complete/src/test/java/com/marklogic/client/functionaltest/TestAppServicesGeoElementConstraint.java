@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.QueryManager.QueryView;
@@ -43,9 +42,9 @@ import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesGeoElementConstraint extends BasicJavaClientREST {
 
-//	private String serverName = "";
 	private static String dbName = "AppServicesGeoConstraintDB";
 	private static String [] fNames = {"AppServicesGeoConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -53,6 +52,7 @@ public class TestAppServicesGeoElementConstraint extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesGeoConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");	
 	}
 @After
 public  void testCleanUp() throws Exception
@@ -67,12 +67,9 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testPointPositiveLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -93,10 +90,7 @@ public  void testCleanUp() throws Exception
 		
 		System.out.println("Returned result of testPointPositiveLangLat :"+convertXMLDocumentToString(resultDoc)+" Ends here");
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("12,5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("12,5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);	
 	}
 
 @Test
@@ -105,12 +99,9 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testPointNegativeLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -132,10 +123,7 @@ public  void testCleanUp() throws Exception
 		System.out.println("testPointNegativeLangLat Result : "+convertXMLDocumentToString(resultDoc));
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("geo-elem:\"-12,-5\"", "string(//*[local-name()='qtext'])", resultDoc);
-		// release client
-		client.release();		
 	}
-
 
 @Test
 	public void testNegativePointInvalidValue() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
@@ -144,11 +132,8 @@ public  void testCleanUp() throws Exception
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -173,10 +158,7 @@ public  void testCleanUp() throws Exception
 			System.out.println("Result : "+result);
 		} catch (Exception e) { e.toString(); }
 		
-		assertTrue("Expected Warning message is not thrown", result.contains("<search:warning id=\"SEARCH-IGNOREDQTEXT\">[Invalid text, cannot parse geospatial point from '12,A'.]</search:warning>"));
-		
-		// release client
-		client.release();		
+		assertTrue("Expected Warning message is not thrown", result.contains("<search:warning id=\"SEARCH-IGNOREDQTEXT\">[Invalid text, cannot parse geospatial point from '12,A'.]</search:warning>"));		
 	}
 
 
@@ -186,12 +168,9 @@ public  void testCleanUp() throws Exception
 		System.out.println("testCirclePositiveLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -215,10 +194,7 @@ public  void testCleanUp() throws Exception
 		assertXpathEvaluatesTo("13,5", "string(//*[local-name()='result'][2]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("12,6", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("11,5", "string(//*[local-name()='result'][4]//*[local-name()='match'])", resultDoc);
-		assertXpathEvaluatesTo("12,4", "string(//*[local-name()='result'][5]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("12,4", "string(//*[local-name()='result'][5]//*[local-name()='match'])", resultDoc);	
 	}
 
 @Test
@@ -227,12 +203,9 @@ public  void testCleanUp() throws Exception
 		System.out.println("testBoxPositiveLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(int i = 1; i <= 7; i++)
-		{
+		for(int i = 1; i <= 7; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -255,10 +228,7 @@ public  void testCleanUp() throws Exception
 		assertXpathEvaluatesTo("12,5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("11,4", "string(//*[local-name()='result'][2]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("11,5", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
-		assertXpathEvaluatesTo("12,4", "string(//*[local-name()='result'][4]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("12,4", "string(//*[local-name()='result'][4]//*[local-name()='match'])", resultDoc);	
 	}
 
 @Test
@@ -267,12 +237,9 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testPointAndWord");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(int i = 1; i <= 9; i++)
-		{
+		for(int i = 1; i <= 9; i++) {
 			writeDocumentUsingInputStreamHandle(client, "geo-constraint" + i + ".xml", "/geo-constraint/", "XML");
 		}
 		
@@ -293,14 +260,14 @@ public  void testCleanUp() throws Exception
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/geo-constraint/geo-constraint8.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
+
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

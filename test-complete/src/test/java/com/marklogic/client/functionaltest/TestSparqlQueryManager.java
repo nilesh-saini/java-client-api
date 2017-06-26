@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,7 +47,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.ForbiddenUserException;
 import com.marklogic.client.Transaction;
@@ -81,6 +80,7 @@ public class TestSparqlQueryManager extends BasicJavaClientREST {
 	private static String [] fNames = {"TestSparqlQueryManagerDB-1"};
 	
 	private static int restPort=8011;
+	private static String hostname = null;
 	private static DatabaseClient client;
 	private static DatabaseClient writeclient;
 	private static DatabaseClient readclient;
@@ -216,12 +216,13 @@ public class TestSparqlQueryManager extends BasicJavaClientREST {
 		setupAppServicesConstraint(dbName);
 		enableCollectionLexicon(dbName);
 		enableTripleIndex(dbName);
+		hostname = getRestServerHostName();
 		waitForServerRestart();
 				
 		//You can enable the triple positions index for faster near searches using cts:triple-range-query.
-		writeclient = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		readclient = getDatabaseClient("rest-reader", "x", Authentication.DIGEST);
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		writeclient = getDatabaseClientWithDigest("rest-writer", "x");
+		readclient = getDatabaseClientWithDigest("rest-reader", "x");
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 				
 		// Build up custom data.
 		StringBuffer sparqldata = new StringBuffer().append("prefix ad: <http://marklogicsparql.com/addressbook#>");
@@ -2323,7 +2324,7 @@ public class TestSparqlQueryManager extends BasicJavaClientREST {
 		
 		createUserRolesWithPrevilages("sem-query-role");
 		createRESTUser("sem-query-user","x","sem-query-role", "rest-writer");
-		DatabaseClient semQueryclient = DatabaseClientFactory.newClient("localhost", restPort, "sem-query-user", "x", Authentication.DIGEST);
+		DatabaseClient semQueryclient = DatabaseClientFactory.newClient(hostname, restPort, new DigestAuthContext("sem-query-user", "x"));
 		
 		GraphManager graphManagerPerm = semQueryclient.newGraphManager();
 		GraphPermissions  graphPermissions = graphManagerPerm.permission("sem-query-role", Capability.UPDATE, Capability.EXECUTE);

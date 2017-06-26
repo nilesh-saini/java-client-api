@@ -29,18 +29,16 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
+import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.BinaryDocumentManager;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
@@ -63,7 +61,6 @@ import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.ReaderHandle;
 import com.marklogic.client.io.SourceHandle;
 import com.marklogic.client.io.StringHandle;
-import javax.xml.transform.Source;
 
 /**
  * @author skottam
@@ -79,9 +76,7 @@ import javax.xml.transform.Source;
 public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 	private static String dbName = "TestBulkWriteDefaultMetadataDB";
 	private static String [] fNames = {"TestBulkWriteDefaultMetadataDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 	
 	/**
 	 * @throws java.lang.Exception
@@ -91,7 +86,8 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		System.out.println("In Setup");
 		configureRESTServer(dbName, fNames);
 		createRESTUser("app-user", "password", "rest-writer","rest-reader" );
-
+		// create new connection for each test below
+		client = getDatabaseClientWithDigest("app-user", "password");
 	}
 
 	/**
@@ -99,31 +95,14 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("app-user");
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("app-user", "password", Authentication.DIGEST);
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
-	}
-
-	public DocumentMetadataHandle setMetadata(){
+	public DocumentMetadataHandle setMetadata() {
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
 		metadataHandle.getCollections().addAll("my-collection1","my-collection2");
@@ -137,7 +116,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		return	metadataHandle;
 	}
 	
-	public void validateMetadata(DocumentMetadataHandle mh){
+	public void validateMetadata(DocumentMetadataHandle mh) {
 		// get metadata values
 		DocumentProperties properties = mh.getProperties();
 		DocumentPermissions permissions = mh.getPermissions();
@@ -181,7 +160,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 
 		TextDocumentManager docMgr = client.newTextDocumentManager();
 
-		DocumentWriteSet writeset =docMgr.newWriteSet();
+		DocumentWriteSet writeset = docMgr.newWriteSet();
 		// put metadata
 		DocumentMetadataHandle mh = setMetadata();
 
@@ -192,7 +171,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		docMgr.write(writeset);
 		DocumentPage page = docMgr.read(docId);
 
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			docMgr.readMetadata(rec.getUri(), mh);
 			validateMetadata(mh);
@@ -205,7 +184,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 	{  
 		String docId[] = {"/foo/test/Foo1.xml","/foo/test/Foo2.xml","/foo/test/Foo3.xml"};
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
-		DocumentWriteSet writeset =docMgr.newWriteSet();
+		DocumentWriteSet writeset = docMgr.newWriteSet();
 		// put metadata
 		DocumentMetadataHandle mh = setMetadata();
 
@@ -218,7 +197,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 
 		DocumentPage page = docMgr.read(docId);
 		assertTrue("DocumentPage Size did not return expected value:: returned==  "+page.size(), page.size() == 3 );
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			docMgr.readMetadata(rec.getUri(), mh);
 			validateMetadata(mh);
@@ -232,7 +211,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		String docId[] = {"Pandakarlino.jpg","mlfavicon.png"};
 
 		BinaryDocumentManager docMgr = client.newBinaryDocumentManager();
-		DocumentWriteSet writeset =docMgr.newWriteSet();
+		DocumentWriteSet writeset = docMgr.newWriteSet();
 		// put metadata
 		DocumentMetadataHandle mh = setMetadata();
 
@@ -256,7 +235,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		}
 		DocumentPage page = docMgr.read(uris);
 
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			docMgr.readMetadata(rec.getUri(), mh);
 			System.out.println(rec.getUri());
@@ -274,7 +253,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		String json3 =  new String("{\"animal\":\"rat\", \"says\":\"keek\"}");
 		Reader strReader = new StringReader(json1);
 		JSONDocumentManager docMgr = client.newJSONDocumentManager();
-		DocumentWriteSet writeset =docMgr.newWriteSet();
+		DocumentWriteSet writeset = docMgr.newWriteSet();
 		// put metadata
 		DocumentMetadataHandle mh = setMetadata();
 
@@ -287,7 +266,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 
 		DocumentPage page = docMgr.read(docId);
 
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			docMgr.readMetadata(rec.getUri(), mh);
 			System.out.println(rec.getUri());
@@ -302,7 +281,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 		String docId[] = {"Pandakarlino.jpg","mlfavicon.png"};
 
 		GenericDocumentManager docMgr = client.newDocumentManager();
-		DocumentWriteSet writeset =docMgr.newWriteSet();
+		DocumentWriteSet writeset = docMgr.newWriteSet();
 		// put metadata
 		DocumentMetadataHandle mh = setMetadata();
 
@@ -341,7 +320,7 @@ public class TestBulkWriteMetadata1  extends BasicJavaClientREST {
 
 		DocumentPage page = docMgr.read("/generic/Pandakarlino.jpg","/generic/dog.json","/generic/foo1.txt","/generic/foo.xml");
 
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			docMgr.readMetadata(rec.getUri(), mh);
 			System.out.println(rec.getUri());

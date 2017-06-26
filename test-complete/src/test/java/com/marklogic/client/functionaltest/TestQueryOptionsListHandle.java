@@ -19,7 +19,7 @@ package com.marklogic.client.functionaltest;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -29,43 +29,37 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.QueryOptionsListHandle;
-import java.util.Map;
 
 public class TestQueryOptionsListHandle extends BasicJavaClientREST {
 
 	private static String dbName = "QueryOptionsListHandleDB";
 	private static String [] fNames = {"QueryOptionsListHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testNPE() throws KeyManagementException, NoSuchAlgorithmException, IOException,  SAXException, ParserConfigurationException
 	{		
 		System.out.println("Running testNPE");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		QueryOptionsListHandle handle = new QueryOptionsListHandle();
 
-		Map map = handle.getValuesMap();
-
-		// release client
-		client.release();
+		Map map = handle.getValuesMap();		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

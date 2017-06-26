@@ -31,7 +31,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.admin.ExtensionLibrariesManager;
 import com.marklogic.client.admin.ExtensionLibraryDescriptor;
@@ -41,13 +40,15 @@ import com.marklogic.client.io.StringHandle;
 public class TestCRUDModulesDb extends BasicJavaClientREST {
 
 	private static String dbName = "Modules";
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
-	System.out.println("In setup");
-	loadGradleProperties();
-	assocRESTServer(getRestServerName(), dbName, getRestServerPort());
+	    System.out.println("In setup");
+	    loadGradleProperties();
+	    assocRESTServer(getRestServerName(), dbName, getRestServerPort());
+	    client = getDatabaseClientWithDigest("rest-admin", "x");	
 	}
 
 @After
@@ -59,10 +60,7 @@ public  void testCleanUp() throws Exception
 @Test
 	public void testXQueryModuleCRUDDuplicateFile() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{	
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
-		// get a manager
-		//ExtensionLibrariesManager libsMgr = Common.client.newServerConfigManager().newExtensionLibrariesManager();
+	    // get a manager		
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
 
 		String Path = "/ext/my/path/to/my/module.xqy";
@@ -101,10 +99,7 @@ public  void testCleanUp() throws Exception
 	
 	}
 
-
 @Test	public void testXQueryModuleCRUDDifferentPath() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
@@ -140,15 +135,11 @@ public  void testCleanUp() throws Exception
 			xqueryModuleAsString = libsMgr.read(secondPath, new StringHandle()).get();
 		} catch (ResourceNotFoundException e) {
 			// pass;
-		}
-		
+		}		
 	}
-
 
 @Test
 public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
@@ -178,14 +169,10 @@ public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSu
 		    libsMgr.read(Path, new StringHandle()).get();
 		} catch (ResourceNotFoundException e) {
 			// pass;
-		}
-		
+		}		
 	}
 
-
 @Test	public void testXQueryModuleCRUDTextFile() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
@@ -215,15 +202,11 @@ public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSu
 		 xqueryModuleAsString = libsMgr.read(Path, new StringHandle()).get();
 		} catch (ResourceNotFoundException e) {
 			// pass;
-		}
-		
+		}		
 	}
 
-
 @Test	public void testXQueryModuleCRUDXmlFile() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
+				
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
 		
@@ -253,14 +236,11 @@ public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSu
 		} catch (ResourceNotFoundException e) {
 			// pass;
 		}
-		
 	}
 
 
 @Test	public void testXQueryModuleReadModulesDb() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
+				
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
 		
@@ -293,21 +273,18 @@ public void testXQueryModuleCRUDBinaryFile() throws KeyManagementException, NoSu
 			System.out.println("Reading deleted file Failed");
 			// pass;
 		}
-		try{
+		try {
 			libsMgr.delete(Path);
-		}catch(Exception e){
+		} catch(Exception e) {
 			System.out.println("Attempt to Delete Non exsting file Failed");
 			e.printStackTrace();
-		}
-		
+		}		
 	}
 
 @Test
 public void testXQueryModuleReadExtensionLibraryDescriptor () throws KeyManagementException, NoSuchAlgorithmException, IOException {
 		System.out.println("testXQueryModuleReadExtensionLibraryDescriptor");
-		
-DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
+				
 		// get a manager
 		ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
 		
@@ -343,20 +320,16 @@ DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGE
 			System.out.println("Reading deleted file Failed");
 			// pass;
 		}
-		try{
+		try {
 			libsMgr.delete(Path);
-		}catch(Exception e){
+		} catch(Exception e) {
 			System.out.println("Attempt to Delete Non exsting file Failed");
 			e.printStackTrace();
 		}
-		
 	}
 
 @Test
-public void testXQueryModuleCRUDXmlFileNegative() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-	
-	DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	
+public void testXQueryModuleCRUDXmlFileNegative() throws KeyManagementException, NoSuchAlgorithmException, IOException {	
 	// get a manager
 	ExtensionLibrariesManager libsMgr = client.newServerConfigManager().newExtensionLibrariesManager();
 	
@@ -364,18 +337,18 @@ public void testXQueryModuleCRUDXmlFileNegative() throws KeyManagementException,
 	FileHandle f = new FileHandle(new File("src/test/java/com/marklogic/client/functionaltest/data/all_well.xml")).withFormat(Format.XML);
 
 	// write XQuery file to the modules database
-	try{
+	try {
 		libsMgr.write(Path, f);
 		Assert.assertTrue("Exception was not thrown",false);
-	}catch(IllegalArgumentException e){
+	} catch(IllegalArgumentException e) {
 		//Issue 210 logged for meaningful error
 		assertEquals("libraryPath (the modules database path under which you install an asset) must begin with /ext/" , e.getMessage());
 	}
 	// delete it
-	try{
+	try {
 		libsMgr.delete(Path);
 		Assert.assertTrue("Exception was not thrown",false);
-	}catch(IllegalArgumentException e){
+	} catch(IllegalArgumentException e) {
 		assertEquals("libraryPath (the modules database path under which you install an asset) must begin with /ext/", e.getMessage());
 	}
 }
@@ -384,9 +357,11 @@ public void testXQueryModuleCRUDXmlFileNegative() throws KeyManagementException,
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		try{
+		// release client
+		client.release();
+		try {
 			deleteRESTServer(getRestServerName()); 
-		}catch(Exception e){
+		} catch(Exception e) {
 			e.printStackTrace(); 
 		}	
 	}

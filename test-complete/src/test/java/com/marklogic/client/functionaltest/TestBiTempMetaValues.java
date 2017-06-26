@@ -35,7 +35,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.bitemporal.TemporalDocumentManager.ProtectionLevel;
 import com.marklogic.client.document.DocumentManager.Metadata;
@@ -62,7 +61,7 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	private static String schemadbName = "TestBiTempMetaValuesSchemaDB";
 	private static String [] schemafNames = {"TestBiTempMetaValuesSchemaDB-1"};
 
-	private DatabaseClient writerClient = null;
+	private static DatabaseClient writerClient = null;
 
 	private final static String dateTimeDataTypeString = "dateTime";
 
@@ -121,6 +120,7 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		System.out.println("In tear down");
+		writerClient.release();
 
 		// Delete database first. Otherwise axis and collection cannot be deleted
 		cleanupRESTServer(dbName, fNames);
@@ -151,7 +151,8 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader","temporal-admin");
 		createRESTUser("eval-readeruser", "x","rest-reader");
 		int restPort = getRestServerPort();
-		writerClient = getDatabaseClientOnDatabase("localhost", restPort, dbName, "eval-user", "x", Authentication.DIGEST);             
+		String hostname = getRestServerHostName();
+		writerClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-user", "x");             
 	}
 
 	@After
@@ -710,6 +711,8 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	@Test
 	// Test bitemporal protections  
 	public void testProtectDelete() throws Exception {
+		DatabaseClient adminClient = null;
+		try {
 
 		System.out.println("Inside testProtectDelete");
 		ConnectedRESTQA.updateTemporalCollectionForLSQT(dbName,
@@ -719,8 +722,9 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		Calendar deleteTime = DatatypeConverter.parseDateTime("2011-01-01T00:00:31");
 		Calendar updateTime1 = DatatypeConverter.parseDateTime("2007-01-01T00:00:21");
 		Calendar updateTime2 = DatatypeConverter.parseDateTime("2009-01-01T00:00:21");
-		
-		DatabaseClient adminClient = getDatabaseClientOnDatabase("localhost", getRestServerPort(), dbName, "admin", "x", Authentication.DIGEST);
+		int restPort = getRestServerPort();
+		String hostname = getRestServerHostName();
+		adminClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "admin", "x");
 
 		String docId = "javaSingleJSONDoc.json";
 		JacksonDatabindHandle<ObjectNode> handle = getJSONDocumentHandle("2001-01-01T00:00:00Z", 
@@ -809,7 +813,14 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		JSONDocumentManager jsonDocMgr = writerClient.newJSONDocumentManager();
 		DocumentPage readResults = jsonDocMgr.read(docId);
 	    System.out.println("Number of results = " + readResults.size());
-	    assertEquals("Wrong number of results", 1, readResults.size());		
+	    assertEquals("Wrong number of results", 1, readResults.size());
+		}
+		catch (Exception ex) {
+			System.out.println("Exception thrown " + ex.getMessage());
+		}
+		finally {
+			adminClient.release();
+		}
 	}
 	
 	@Test
@@ -1104,7 +1115,11 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	public void testProtectWipeWithoutPermission() throws Exception {
 
 		System.out.println("Inside testProtectWipeWithoutPermission");
-		DatabaseClient adminClient = getDatabaseClientOnDatabase("localhost", getRestServerPort(), dbName, "eval-readeruser", "x", Authentication.DIGEST);
+		DatabaseClient adminClient = null;
+		try {
+		int restPort = getRestServerPort();
+		String hostname = getRestServerHostName();
+		adminClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-readeruser", "x");
 		ConnectedRESTQA.updateTemporalCollectionForLSQT(dbName,
 		        temporalLsqtCollectionName, true);
 		
@@ -1133,6 +1148,14 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	    	System.out.println("Exception not thrown when user does not have permissions" + str.toString());
 	    }
 		assertTrue("Exception not thrown when user does not have permissions ", str.toString().contains("User is not allowed to protect resource"));
+		}
+		catch (Exception ex) {
+			System.out.println("Exception thrown " + ex.getMessage());
+		}
+		finally {
+			adminClient.release();
+		}
+		
 	}
 	
 	@Test
@@ -1142,7 +1165,11 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	public void testProtectWipe() throws Exception {
 
 		System.out.println("Inside testProtectWipe");
-		DatabaseClient adminClient = getDatabaseClientOnDatabase("localhost", getRestServerPort(), dbName, "rest-admin", "x", Authentication.DIGEST);
+		DatabaseClient adminClient = null;
+		try {
+		int restPort = getRestServerPort();
+		String hostname = getRestServerHostName();
+		adminClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "rest-admin", "x");
 		ConnectedRESTQA.updateTemporalCollectionForLSQT(dbName,
 		        temporalLsqtCollectionName, true);
 		
@@ -1195,5 +1222,12 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		readResults = jsonDocMgr.read(docId);
 	    System.out.println("Number of results = " + readResults.size());
 	    assertEquals("Wrong number of results", 0, readResults.size());	    
+	}
+	catch (Exception ex) {
+		System.out.println("Exception thrown " + ex.getMessage());
+	}
+	finally {
+		adminClient.release();
+	}
 	}
 }

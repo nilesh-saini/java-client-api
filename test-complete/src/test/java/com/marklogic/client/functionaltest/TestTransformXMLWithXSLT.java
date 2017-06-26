@@ -16,9 +16,10 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
@@ -30,31 +31,34 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.document.XMLDocumentManager;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.SourceHandle;
 
-import org.junit.*;
-
 public class TestTransformXMLWithXSLT extends BasicJavaClientREST {
-
+	private static String hostname = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
+		loadGradleProperties();
 		setupJavaRESTServerWithDB( "REST-Java-Client-API-Server-withDB", 8015);
-
+		hostname = getRestServerHostName();
 	}
 
 	@Test	
 	public void testWriteXMLWithXSLTransform() throws KeyManagementException, NoSuchAlgorithmException, TransformerException, FileNotFoundException
 	{	
 		// connect the client
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", 8015, "rest-writer", "x", Authentication.DIGEST);
+		DatabaseClient client = DatabaseClientFactory.newClient(hostname, 8015, new DigestAuthContext("rest-writer", "x"));
 
 		// get the doc
 		Source source = new StreamSource("src/test/java/com/marklogic/client/functionaltest/data/employee.xml");

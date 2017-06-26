@@ -25,9 +25,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -37,7 +35,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.DocumentMetadataHandle.Capability;
 import com.marklogic.client.pojo.PojoRepository;
@@ -53,9 +50,7 @@ public class TestJacksonAnnotationsTest extends BasicJavaClientREST {
 
 	private static String dbName = "TestJacksonAnnotationsTestDB";
 	private static String[] fNames = { "TestJacksonAnnotationsTest-1" };
-	
-	
-	private DatabaseClient client;
+	private static DatabaseClient client = null;
 	private long negativeId = -1L;
 
 	/*
@@ -290,23 +285,15 @@ public class TestJacksonAnnotationsTest extends BasicJavaClientREST {
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
 
 	public DocumentMetadataHandle setMetadata() {

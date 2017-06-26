@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.TransformExtensionsManager;
 import com.marklogic.client.datamovement.ApplyTransformListener;
@@ -123,7 +124,7 @@ public class ApplyTransformTest extends  DmsdkJavaClientREST {
 
 		associateRESTServerWithDB(server,dbName);
 
-		dbClient = DatabaseClientFactory.newClient(host, port, user, password, Authentication.DIGEST);		
+		dbClient = DatabaseClientFactory.newClient(host, port, new DigestAuthContext(user, password));		
 		dmManager = dbClient.newDataMovementManager();
 
 		clusterInfo = ((DatabaseClientImpl) dbClient).getServices()
@@ -240,6 +241,7 @@ public class ApplyTransformTest extends  DmsdkJavaClientREST {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		dbClient.release();
 		clearDB(port);
 		associateRESTServerWithDB(server,"Documents");
 		for (int i =0 ; i < clusterInfo.size(); i++){

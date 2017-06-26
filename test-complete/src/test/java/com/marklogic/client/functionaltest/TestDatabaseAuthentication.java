@@ -16,26 +16,27 @@
 
 package com.marklogic.client.functionaltest;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-
-import java.io.InputStream;
-
-import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
-import com.marklogic.client.functionaltest.BasicJavaClientREST;
-import com.marklogic.client.io.InputStreamHandle;
-
-import org.junit.*;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 /*
  * The tests here run against normal a no SSL enabled REST Server.
  * This is because, there is no point in enabling a SSL on a REST Server and then testing
  * for Basic and None digests.
  */
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.DatabaseClientFactory;
+import com.marklogic.client.DatabaseClientFactory.BasicAuthContext;
+import com.marklogic.client.io.InputStreamHandle;
 
 public class TestDatabaseAuthentication extends BasicJavaClientREST {
 
@@ -106,7 +107,7 @@ public class TestDatabaseAuthentication extends BasicJavaClientREST {
 		String filename = "text-original.txt";
 		
 		// connect the client
-		DatabaseClient client = DatabaseClientFactory.newClient(hostName, restPort, "rest-writer", "x", Authentication.BASIC);
+		DatabaseClient client = DatabaseClientFactory.newClient(hostName, restPort, new BasicAuthContext("rest-writer", "x"));
 		
 		// write doc
 	    writeDocumentUsingStringHandle(client, filename, "/write-text-doc-basic/", "Text");
@@ -133,7 +134,7 @@ public class TestDatabaseAuthentication extends BasicJavaClientREST {
 
     @AfterClass
 	public static void tearDown() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		
 		setAuthentication("digest",restServerName);
 		setDefaultUser("nobody",restServerName);

@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.admin.TransformExtensionsManager;
@@ -46,7 +45,7 @@ public class TestResponseTransform extends BasicJavaClientREST {
 
 	private static String dbName = "TestResponseTransformDB";
 	private static String [] fNames = {"TestResponseTransformDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception 
@@ -54,6 +53,7 @@ public class TestResponseTransform extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
@@ -63,8 +63,6 @@ public class TestResponseTransform extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -72,8 +70,7 @@ public class TestResponseTransform extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/response-transform/", "XML");
 		}
 
@@ -123,10 +120,7 @@ public class TestResponseTransform extends BasicJavaClientREST {
 		assertTrue("transform on header is not found", resultDoc.contains("MyURI"));
 		assertTrue("transform on doc return is not found", resultDoc.contains("<td align=\"left\">/response-transform/constraint5.xml</td>"));
 
-		transMgr.deleteTransform("search2html");
-
-		// release client
-		client.release();		
+		transMgr.deleteTransform("search2html");	
 	}
 
 	@Test	
@@ -136,8 +130,6 @@ public class TestResponseTransform extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -145,8 +137,7 @@ public class TestResponseTransform extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/response-transform/", "XML");
 		}
 
@@ -188,30 +179,26 @@ public class TestResponseTransform extends BasicJavaClientREST {
 
 		String exception = "";
 
-		try
-		{
+		try {
 			queryMgr.search(querydef, resultsHandle);
-		} catch(Exception e)
-		{
+		} catch(Exception e) {
 			exception = e.toString();
 			System.out.println(exception);
 		}
 
 		String expectedException = "Local message: search failed: Bad Request. Server Message: RESTAPI-INVALIDREQ: (err:FOER0000) Invalid request:  reason: transform extension does not exist: foo";
-		assertTrue("exception is not thrown", exception.contains(expectedException));
-		//bug 22356
+		assertTrue("exception is not thrown", exception.contains(expectedException));		
 		assertTrue("Value should be null", resultsHandle.get()==null);
 
 		transMgr.deleteTransform("search2html");
-
-		// release client
-		client.release();		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

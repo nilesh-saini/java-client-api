@@ -33,21 +33,20 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DOMHandle;
 public class TestMetadataXML extends BasicJavaClientREST {
 
 	private static String dbName = "TestMetadataXMLDB";
 	private static String [] fNames = {"TestMetadataXMLDB-1"};
-	
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
-
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test
@@ -57,9 +56,6 @@ public class TestMetadataXML extends BasicJavaClientREST {
 
 		String filename = "Simple_ScanTe.png";
 		String uri = "/write-bin-metadata/";
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
@@ -128,12 +124,7 @@ public class TestMetadataXML extends BasicJavaClientREST {
 		Document docReadMetadataDelete = readMetadataHandleDelete.get();
 
 		assertXpathEvaluatesTo("0", "string(//*[local-name()='quality'])", docReadMetadataDelete);
-
-		// release the client
-		client.release();
 	}	
-
-
 
 	@Test	
 	public void testMetadataXMLNegative() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -144,13 +135,13 @@ public class TestMetadataXML extends BasicJavaClientREST {
 		String uri = "/write-neg-metadata/";
 
 		// connect the client
-		DatabaseClient client1 = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
+		DatabaseClient client1 = getDatabaseClientWithDigest("rest-writer", "x");
 
 		// write the doc
 		writeDocumentUsingBytesHandle(client1, filename, uri, "Binary");
 
 		// connect with another client to write metadata
-		DatabaseClient client2 = getDatabaseClient("rest-reader", "x", Authentication.DIGEST);
+		DatabaseClient client2 = getDatabaseClientWithDigest("rest-reader", "x");
 
 		// create doc manager
 		XMLDocumentManager docMgr = client2.newXMLDocumentManager();
@@ -169,8 +160,7 @@ public class TestMetadataXML extends BasicJavaClientREST {
 		String exception = "";
 
 		// write original metadata
-		try
-		{
+		try {
 			docMgr.writeMetadata(docId, writeMetadataHandle);
 		}
 		catch (Exception e) { exception = e.toString(); } 
@@ -182,12 +172,15 @@ public class TestMetadataXML extends BasicJavaClientREST {
 
 		// release the clients
 		client1.release();
-		client2.release();
-	}	
+		client2.release();	
+	}
+	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release the client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

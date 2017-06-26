@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.XMLStreamReaderHandle;
 import com.marklogic.client.query.MatchDocumentSummary;
@@ -43,7 +42,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 	private static String dbName = "TestLinkResultDocuments";
 	private static String [] fNames = {"TestLinkResultDocuments-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUp() throws Exception 
@@ -51,6 +50,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);;
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test
@@ -60,18 +60,15 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint4.xml", "binary.jpg", "constraint4.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
-			if (filename.contains("xml")){
+		for(String filename : filenames) {
+			if (filename.contains("xml")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "XML");
 			}
-			else if (filename.contains("json")){
+			else if (filename.contains("json")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "JSON");
 			}
-			else if (filename.contains("jpg")){ 
+			else if (filename.contains("jpg")) { 
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "Binary");
 			}
 		}
@@ -89,8 +86,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 		SearchHandle resultsHandle = queryMgr.search(querydef, new SearchHandle()); 
 
 		// get the result
-		for (MatchDocumentSummary result : resultsHandle.getMatchResults()) 
-		{
+		for (MatchDocumentSummary result : resultsHandle.getMatchResults()) {
 			System.out.println(result.getMimeType()+ ": Mime Type");
 			System.out.println(result.getPath()+ ": Path");
 			System.out.println(result.getFormat()+ ": Format");
@@ -98,12 +94,9 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 			assertTrue("Uri is Wrong", result.getPath().contains("/mime-type/constraint4.json")||result.getPath().contains("/mime-type/constraint4.xml"));
 		} 
 
-
 		XMLStreamReaderHandle shandle = queryMgr.search(querydef, new XMLStreamReaderHandle());
 		String resultDoc2 = shandle.toString();
 		System.out.println("Statics : \n"+resultDoc2);
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -113,27 +106,24 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint4.xml", "binary.jpg", "constraint3.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
-			if (filename.contains("xml")){
+		for(String filename : filenames) {
+			if (filename.contains("xml")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "XML");
 			}
-			else if (filename.contains("json")){
+			else if (filename.contains("json")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "JSON");
 			}
-			else if (filename.contains("jpg")){ 
+			else if (filename.contains("jpg")) { 
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "Binary");
 			}
 		}
-		try{
+		try {
 			String OS = System.getProperty("os.name");
 			System.out.println("OS name : "+ OS);
 			File source = null;
 			File target = null;
-			if (OS.contains("Windows 7")){
+			if (OS.contains("Windows 7")) {
 				source = new File("C:/builds/winnt/HEAD/xcc/api_tests/src/test/java/com/marklogic/client/functionaltest/data/result-decorator-test.xqy");
 				target = new File("C:/Program Files/MarkLogic/Modules/MarkLogic/appservices/search/result-decorator-test.xqy");
 			}
@@ -148,7 +138,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 			System.out.println(source.exists());
 			System.out.println(target.exists());
-			if (target.exists()){
+			if (target.exists()) {
 				target.delete();
 			}
 			copyWithChannels(source, target, true);
@@ -165,8 +155,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 			SearchHandle resultsHandle = queryMgr.search(querydef, new SearchHandle()); 
 
 			// get the result
-			for (MatchDocumentSummary result : resultsHandle.getMatchResults()) 
-			{
+			for (MatchDocumentSummary result : resultsHandle.getMatchResults()) {
 				System.out.println(result.getMimeType()+ ": Mime Type");
 				System.out.println(result.getPath()+ ": Path");
 				System.out.println(result.getFormat()+ ": Format");
@@ -175,15 +164,10 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 			XMLStreamReaderHandle shandle = queryMgr.search(querydef, new XMLStreamReaderHandle());
 			String resultDoc2 = shandle.toString();
 			System.out.println("Statics : \n"+resultDoc2);
-
 		}
-		catch(Exception e){
+		catch(Exception e) {
 			e.printStackTrace();
 		}
-		
-		// release client
-		client.release();	
-
 	}
 
 	@Test	
@@ -193,27 +177,24 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint4.xml", "binary.jpg", "constraint4.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
-			if (filename.contains("xml")){
+		for(String filename : filenames) {
+			if (filename.contains("xml")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "XML");
 			}
-			else if (filename.contains("json")){
+			else if (filename.contains("json")) {
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "JSON");
 			}
-			else if (filename.contains("jpg")){ 
+			else if (filename.contains("jpg")) { 
 				writeDocumentUsingInputStreamHandle(client, filename, "/mime-type/", "Binary");
 			}
 		}
-		try{	
+		try {	
 			String OS = System.getProperty("os.name");
 			System.out.println("OS name : "+ OS);
 			File source = null;
 			File target = null;
-			if (OS.contains("Windows 7")){
+			if (OS.contains("Windows 7")) {
 				source = new File("C:/builds/winnt/HEAD/xcc/api_tests/src/test/java/com/marklogic/client/functionaltest/data/result-decorator-test.xqy");
 				target = new File("C:/Program Files/MarkLogic/Modules/MarkLogic/appservices/search/result-decorator-test.xqy");
 			}
@@ -228,7 +209,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 
 			System.out.println(source.exists());
 			System.out.println(target.exists());
-			if (target.exists()){
+			if (target.exists()) {
 				target.delete();
 			}
 			copyWithChannels(source, target, true);
@@ -245,8 +226,7 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 			SearchHandle resultsHandle = queryMgr.search(querydef, new SearchHandle()); 
 
 			// get the result
-			for (MatchDocumentSummary result : resultsHandle.getMatchResults()) 
-			{
+			for (MatchDocumentSummary result : resultsHandle.getMatchResults()) {
 				System.out.println(result.getMimeType()+ ": Mime Type");
 				System.out.println(result.getPath()+ ": Path");
 				System.out.println(result.getFormat()+ ": Format");
@@ -255,19 +235,17 @@ public class TestLinkResultDocuments extends BasicJavaClientREST {
 			XMLStreamReaderHandle shandle = queryMgr.search(querydef, new XMLStreamReaderHandle());
 			String resultDoc2 = shandle.toString();
 			System.out.println("Statics : \n"+resultDoc2);
-
 		}
-		catch(Exception e){
+		catch(Exception e) {
 			e.printStackTrace();
 		}
-		// release client
-
-		client.release();	
 	}
 	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

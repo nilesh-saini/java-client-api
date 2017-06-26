@@ -38,7 +38,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.FileHandle;
@@ -51,7 +50,7 @@ import com.marklogic.client.query.StringQueryDefinition;
 public class TestQueryOptionsHandle extends BasicJavaClientREST {
 	private static String dbName = "TestQueryOptionsHandleDB";
 	private static String [] fNames = {"TestQueryOptionsHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 	private static int restPort=8011;
 
 	@BeforeClass	
@@ -59,6 +58,7 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -74,8 +74,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for writing query options
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -129,9 +127,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -141,8 +136,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "appservicesConstraintCombinationOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for writing query options
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -196,12 +189,8 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 
 		// get the result
 		Document resultDoc = resultsHandle.get();
-		//System.out.println(convertXMLDocumentToString(resultDoc));
-
+		
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -211,8 +200,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "appservicesConstraintCombinationOpt.json";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for writing query options
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -237,7 +224,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 		optionsMgr.readOptions(queryOptionName, readHandle);
 		String output = readHandle.toString();
 		System.out.println(output);
-		System.out.println("============================");
 
 		// write back query option with StringHandle
 		String queryOptionNamePOJO = "appservicesConstraintCombinationPOJOOpt.json";
@@ -267,9 +253,6 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -277,10 +260,7 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 	{	
 		System.out.println("Running testJSONConverter");
 
-		//String queryOptionName = "jsonConverterOpt.json";
 		String queryOptionName = "queryValidationOpt.json";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for writing query options
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -299,14 +279,13 @@ public class TestQueryOptionsHandle extends BasicJavaClientREST {
 		optionsMgr.readOptions(queryOptionName, readHandle);
 		String output = readHandle.toString();
 		System.out.println(output);
-		System.out.println("============================");
-
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

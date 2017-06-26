@@ -16,12 +16,14 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import javax.xml.transform.OutputKeys;
@@ -38,7 +40,7 @@ import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.TransformExtensionsManager;
@@ -50,7 +52,6 @@ import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.SourceHandle;
-import java.util.Map;
 
 public class TestBulkWriteWithTransformations extends BasicJavaClientREST{
 	private static final int BATCH_SIZE=100;
@@ -58,21 +59,22 @@ public class TestBulkWriteWithTransformations extends BasicJavaClientREST{
 	private static String dbName = "TestBulkWriteWithTransformDB";
 	private static String [] fNames = {"TestBulkWriteWithTransformDB-1"};
 	
-	
-	private  DatabaseClient client ;
+	private  DatabaseClient client;
 	// Additional port to test for Uber port
     private static int uberPort = 8000;
+    private static String hostname = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		hostname = getRestServerHostName();
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("eval-user");
 		deleteUserRole("test-eval");
@@ -83,7 +85,7 @@ public class TestBulkWriteWithTransformations extends BasicJavaClientREST{
 		// create new connection for each test below
 		createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke");
 	    createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
-		client = DatabaseClientFactory.newClient("localhost", uberPort, dbName, "eval-user", "x", Authentication.DIGEST);
+		client = DatabaseClientFactory.newClient(hostname, uberPort, dbName, new DigestAuthContext("eval-user", "x"));
 	}
 
 	@After

@@ -34,7 +34,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.FileHandle;
@@ -43,13 +42,15 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 	
 	private static String dbName = "TestDocumentFormatDB";
 	private static String [] fNames = {"TestDocumentFormat-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
-		System.out.println("In setup");
-		
+		System.out.println("In setup");		
 		configureRESTServer(dbName, fNames);
+		// connect the client
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test
@@ -59,10 +60,7 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/xml-format-xml-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+	
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -81,10 +79,7 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
-    	assertEquals("URI is not found", expectedUri, docUri);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("URI is not found", expectedUri, docUri);	
 	}
 
 	@Test
@@ -94,9 +89,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/json-format-xml-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -121,10 +113,7 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		} catch (Exception e) { exception = e.toString(); }
 		
 		boolean isExceptionThrown = exception.contains(expectedException);
-		assertTrue("Exception is not thrown", isExceptionThrown);
-		
-	    // release the client
-	    client.release();
+		assertTrue("Exception is not thrown", isExceptionThrown);	
 	}
 
 	@Test
@@ -134,9 +123,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/bin-format-xml-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -157,9 +143,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}
 
 	@Test	
@@ -170,9 +153,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		String filename = "flipper.xml";
 		String uri = "/txt-format-xml-file/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -192,9 +172,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}
 
 	@Test
@@ -204,9 +181,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/json-format-json-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -227,9 +201,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test
@@ -239,9 +210,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/xml-format-json-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -262,9 +230,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test	
@@ -274,9 +239,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/bin-format-json-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -297,9 +259,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test
@@ -309,9 +268,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/txt-format-json-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -332,9 +288,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test	public void testBinaryFormatOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -343,9 +296,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-format-bin-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -366,9 +316,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test	public void testXMLFormatOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -377,9 +324,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/xml-format-bin-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -405,9 +349,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		boolean isExceptionThrown = exception.contains(expectedException);
 		assertTrue("Exception is not thrown", isExceptionThrown);
-		
-	    // release the client
-	    client.release();
 	}	
 
 	@Test	public void testJSONFormatOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -416,9 +357,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/json-format-bin-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -444,9 +382,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		boolean isExceptionThrown = exception.contains(expectedException);
 		assertTrue("Exception is not thrown", isExceptionThrown);
-		
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testTextFormatOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -455,10 +390,7 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-format-bin-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -483,9 +415,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		boolean isExceptionThrown = exception.contains(expectedException);
 		assertTrue("Exception is not thrown", isExceptionThrown);
-
-	    // release the client
-	    client.release();
 	}	
 
 	@Test	public void testTextFormatOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -494,9 +423,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "text-original.txt";
 		String uri = "/txt-format-txt-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -517,21 +443,14 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}	
 	
-
 	@Test	public void testXMLFormatOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
 	{
 		System.out.println("Running testXMLFormatOnText");
 		
 		String filename = "text-original.txt";
 		String uri = "/xml-format-txt-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -552,9 +471,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testJSONFormatOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -563,9 +479,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "text-original.txt";
 		String uri = "/json-format-txt-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -591,9 +504,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		boolean isExceptionThrown = exception.contains(expectedException);
 		assertTrue("Exception is not thrown", isExceptionThrown);
-
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testBinaryFormatOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -602,9 +512,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "text-original.txt";
 		String uri = "/bin-format-txt-file/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -625,9 +532,6 @@ public class TestDocumentFormat extends BasicJavaClientREST {
     	String expectedUri = uri + filename;
     	String docUri = docMgr.exists(expectedUri).getUri();
     	assertEquals("URI is not found", expectedUri, docUri);
-
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testNegativeJSONFormatWithDOMHandle() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -636,16 +540,11 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 		
 		String filename = "xml-original.xml";
 		String uri = "/negative-format/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
 		Document readDoc = expectedXMLDocument(filename);
-		
-		//File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
 		// create a handle on the content
 		DOMHandle handle = new DOMHandle();
@@ -661,14 +560,14 @@ public class TestDocumentFormat extends BasicJavaClientREST {
 				
 		boolean isExceptionThrown = exception.contains(expectedException);
 		assertTrue("Wrong exception", isExceptionThrown);
-
-	    // release the client
-	    client.release();
 	}
+	
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

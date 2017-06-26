@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.admin.TransformExtensionsManager;
@@ -51,13 +50,14 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 
 	private static String dbName = "TestServerAssignedDocumentUriDB";
 	private static String [] fNames = {"TestServerAssignedDocumentUri-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -66,9 +66,6 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println("Running testCreate");
 
 		String filename = "flipper.xml";
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
@@ -95,9 +92,6 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println(content);
 
 		assertTrue("document is not created", content.contains("Flipper"));
-
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -106,9 +100,6 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println("Running testCreateMultibyte");
 
 		String filename = "flipper.xml";
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
@@ -136,11 +127,9 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 			System.out.println(content);
 
 			assertTrue("document is not created", content.contains("Flipper"));
-		}catch(ResourceNotFoundException e){
+		} catch(ResourceNotFoundException e) {
 			System.out.println("Because of Special Characters in uri, it is throwing exception");
 		}
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -150,14 +139,11 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 
 		String filename = "flipper.xml";
 
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 
 		// create template
-		try{
+		try {
 			DocumentUriTemplate template = docMgr.newDocumentUriTemplate("/");
 			template.withDirectory("/mytest/create/");
 
@@ -175,12 +161,10 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 			String docId = desc.getUri();
 			System.out.println(docId);
 		}
-		catch(IllegalArgumentException i){
+		catch(IllegalArgumentException i) {
 			i.printStackTrace();
 			System.out.println("Expected Output");
 		}
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -189,13 +173,10 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println("Running testCreateInvalidDirectory");
 
 		String filename = "flipper.xml";
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
+		
 		// create doc manager
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
-		try{
+		try {
 			// create template
 			DocumentUriTemplate template = docMgr.newDocumentUriTemplate("xml");
 			template.withDirectory("/:?#[]@/");
@@ -214,12 +195,10 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 			String docId = desc.getUri();
 			System.out.println(docId);
 		}
-		catch(IllegalArgumentException i){
+		catch(IllegalArgumentException i) {
 			i.printStackTrace();
 			assertTrue("Expected error didnt came up",i.toString().contains("Directory is not valid: /:?#[]@/"));
 		}
-		// release the client
-		client.release();
 	}
 
 	@Test	
@@ -228,7 +207,7 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println("Running testCreateWithTransformerTxMetadata");
 
 		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		DatabaseClient clientA = getDatabaseClientWithDigest("rest-admin", "x");
 
 		// get the doc
 		Source source = new StreamSource("src/test/java/com/marklogic/client/functionaltest/data/employee.xml");
@@ -239,18 +218,15 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		String xsl = convertFileToString(file);
 
 		// create transform
-		TransformExtensionsManager extensionMgr = client.newServerConfigManager().newTransformExtensionsManager();
+		TransformExtensionsManager extensionMgr = clientA.newServerConfigManager().newTransformExtensionsManager();
 		extensionMgr.writeXSLTransform("somename", new StringHandle().with(xsl));
 		ServerTransform transform = new ServerTransform("somename");
 
 		// release rest-admin client
-		client.release();
-
-		// connect the rest-writer client
-		DatabaseClient client1 = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
+		clientA.release();
 
 		// create a doc manager
-		XMLDocumentManager docMgr = client1.newXMLDocumentManager();
+		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 
 		// create template
 		DocumentUriTemplate template = docMgr.newDocumentUriTemplate("xml");
@@ -268,7 +244,7 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		writeMetadataHandle.set(docMetadata);
 
 		// create transaction
-		Transaction transaction = client1.openTransaction();
+		Transaction transaction = client.openTransaction();
 
 		// create doc
 		DocumentDescriptor desc = docMgr.create(template, writeMetadataHandle, handle, transform, transaction);
@@ -280,13 +256,10 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println("Before commit:");
 
 		String exception = "";
-		try
-		{
+		try {
 			String content = docMgr.read(desc, new StringHandle()).get();
 			System.out.println(content);
-		} catch (Exception e) 
-
-		{
+		} catch (Exception e) {
 			System.out.println(e);
 			exception = e.toString();
 		}
@@ -307,16 +280,15 @@ public class TestServerAssignedDocumentURI extends BasicJavaClientREST {
 		System.out.println(metadataContent);
 
 		assertTrue("metadata is not created", metadataContent.contains("<Author>MarkLogic</Author>"));
-		handle.close();
-
-		// release client
-		client1.release();
+		handle.close();	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

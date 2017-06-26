@@ -32,7 +32,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentMetadataPatchBuilder.Cardinality;
 import com.marklogic.client.document.DocumentPatchBuilder;
@@ -46,7 +45,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 	private static String dbName = "TestPatchCardinalityDB";
 	private static String [] fNames = {"TestPatchCardinalityDB-1"};
-	
+	private static DatabaseClient client = null;
 	private static int restPort=8011;
 
 	@BeforeClass
@@ -55,6 +54,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@After
@@ -71,11 +71,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal1.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -86,22 +83,17 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		DocumentPatchHandle patchHandle = patchBldr.build();
 
 		String exception = "";
-		try
-		{
+		try {
 			docMgr.patch(docId, patchHandle);
 		}
-		catch (Exception e)
-		{
+		catch (Exception e) {
 			System.out.println(e.getMessage());
 			exception = e.getMessage();
 		}
 
 		String expectedException = "Local message: write failed: Bad Request. Server Message: RESTAPI-INVALIDREQ: (err:FOER0000) Invalid request:  reason: invalid content patch operations for uri /cardinal/cardinal1.xml: invalid cardinality of 5 nodes for: /root/foo";
 
-		assertTrue("Exception is not thrown", exception.contains(expectedException));
-
-		// release client
-		client.release();		
+		assertTrue("Exception is not thrown", exception.contains(expectedException));				
 	}
 
 	@Test	
@@ -111,11 +103,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal2.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -131,9 +120,6 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		System.out.println(content);
 
 		assertTrue("fragment is not inserted", content.contains("<bar>added</bar>"));
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -143,11 +129,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal1.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -166,10 +149,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		assertTrue("fragment is not inserted", content.contains("<foo>two</foo><bar>added</bar>"));
 		assertTrue("fragment is not inserted", content.contains("<foo>three</foo><bar>added</bar>"));
 		assertTrue("fragment is not inserted", content.contains("<foo>four</foo><bar>added</bar>"));
-		assertTrue("fragment is not inserted", content.contains("<foo>five</foo><bar>added</bar>"));
-
-		// release client
-		client.release();		
+		assertTrue("fragment is not inserted", content.contains("<foo>five</foo><bar>added</bar>"));			
 	}
 
 	@Test	
@@ -179,11 +159,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal3.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -194,12 +171,10 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		DocumentPatchHandle patchHandle = patchBldr.build();
 
 		String exception = "";
-		try
-		{
+		try {
 			docMgr.patch(docId, patchHandle);
 		}
-		catch (Exception e)
-		{
+		catch (Exception e) {
 			System.out.println(e.getMessage());
 			exception = e.getMessage();
 		}
@@ -207,9 +182,6 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		String expectedException = "Local message: write failed: Bad Request. Server Message: RESTAPI-INVALIDREQ: (err:FOER0000) Invalid request:  reason: invalid content patch operations for uri /cardinal/cardinal3.xml: invalid cardinality of 0 nodes for: /root/foo";
 
 		assertTrue("Exception is not thrown", exception.contains(expectedException));
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -218,12 +190,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		System.out.println("Running testZeroOrOneCardinalityNegative");
 
 		String[] filenames = {"cardinal1.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -234,12 +202,10 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		DocumentPatchHandle patchHandle = patchBldr.build();
 
 		String exception = "";
-		try
-		{
+		try {
 			docMgr.patch(docId, patchHandle);
 		}
-		catch (Exception e)
-		{
+		catch (Exception e) {
 			System.out.println(e.getMessage());
 			exception = e.getMessage();
 		}
@@ -247,11 +213,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		String expectedException = "Local message: write failed: Bad Request. Server Message: RESTAPI-INVALIDREQ: (err:FOER0000) Invalid request:  reason: invalid content patch operations for uri /cardinal/cardinal1.xml: invalid cardinality of 5 nodes for: /root/foo";
 
 		assertTrue("Exception is not thrown", exception.contains(expectedException));
-
-		// release client
-		client.release();		
 	}
-
 
 	@Test	
 	public void testZeroOrOneCardinalityPositive() throws KeyManagementException, NoSuchAlgorithmException, IOException
@@ -260,11 +222,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal2.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -279,10 +238,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		System.out.println(content);
 
-		assertTrue("fragment is not inserted", content.contains("<foo>one</foo><bar>added</bar>"));
-
-		// release client
-		client.release();		
+		assertTrue("fragment is not inserted", content.contains("<foo>one</foo><bar>added</bar>"));			
 	}
 
 	@Test	
@@ -292,11 +248,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal3.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -311,10 +264,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		System.out.println(content);
 
-		assertFalse("fragment is inserted", content.contains("<baz>one</baz><bar>added</bar>"));
-
-		// release client
-		client.release();		
+		assertFalse("fragment is inserted", content.contains("<baz>one</baz><bar>added</bar>"));		
 	}
 
 	@Test	
@@ -324,11 +274,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal1.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 		}
 
@@ -348,9 +295,6 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 		assertTrue("fragment is not inserted", content.contains("<foo>three</foo><bar>added</bar>"));
 		assertTrue("fragment is not inserted", content.contains("<foo>four</foo><bar>added</bar>"));
 		assertTrue("fragment is not inserted", content.contains("<foo>five</foo><bar>added</bar>"));
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -360,11 +304,8 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 
 		String[] filenames = {"cardinal1.xml","cardinal4.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/cardinal/", "XML");
 
 			String docId = "";
@@ -372,7 +313,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 			XMLDocumentManager docMgr = client.newXMLDocumentManager();
 
 			DocumentPatchBuilder patchBldr = docMgr.newPatchBuilder();
-			if (filename == "cardinal1.xml"){
+			if (filename == "cardinal1.xml") {
 				patchBldr.insertFragment("/root", Position.LAST_CHILD, Cardinality.ONE, "<bar>added</bar>");
 			}
 			else if (filename == "cardinal4.xml") {
@@ -382,9 +323,9 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 			String RawPatch = patchHandle.toString();
 			System.out.println("Before"+RawPatch);
 
-			if (filename == "cardinal1.xml"){
-				try
-				{	docId= "/cardinal/cardinal1.xml";
+			if (filename == "cardinal1.xml") {
+				try {	
+				docId= "/cardinal/cardinal1.xml";
 				docMgr.patch(docId, patchHandle);
 
 				String actual = docMgr.readMetadata(docId, new DocumentMetadataHandle()).toString();
@@ -399,14 +340,12 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 				XMLAssert.assertXpathEvaluatesTo("rest-readerread", "//permissions/permission[role-name[. = 'rest-reader'] and capability[. = 'read']]", actual);
 				XMLAssert.assertXpathEvaluatesTo("rest-writerupdate", "//permissions/permission[role-name[. = 'rest-writer'] and capability[. = 'update']]", actual);    
 				}
-				catch (Exception e)
-				{
+				catch (Exception e) {
 					System.out.println(e.getMessage());
 				}
 			}
 			else if (filename == "cardinal4.xml") {
-				try
-				{	
+				try {	
 					docId = "/cardinal/cardinal4.xml";
 					docMgr.clearMetadataCategories();
 					docMgr.patch(docId, new StringHandle(patchHandle.toString()));
@@ -424,8 +363,7 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 					XMLAssert.assertXpathEvaluatesTo("rest-readerread", "//permissions/permission[role-name[. = 'rest-reader'] and capability[. = 'read']]", actual);
 					XMLAssert.assertXpathEvaluatesTo("rest-writerupdate", "//permissions/permission[role-name[. = 'rest-writer'] and capability[. = 'update']]", actual);    
 				}
-				catch (Exception e)
-				{
+				catch (Exception e) {
 					System.out.println(e.getMessage());
 				}
 			}
@@ -433,17 +371,15 @@ public class TestPatchCardinality extends BasicJavaClientREST {
 			String actual = docMgr.read(docId, new StringHandle()).get();
 
 			System.out.println("Actual : "+actual);
-		}
-
-		// release client
-		client.release();		
+		}		
 	}
 	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

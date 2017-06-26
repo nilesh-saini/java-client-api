@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
@@ -48,7 +47,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 	private static String dbName = "TestStandaloneQueryDB";
 	private static String [] fNames = {"TestStandaloneQueryDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception 
@@ -57,6 +56,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		configureRESTServer(dbName, fNames);
 		setDatabaseProperties(dbName,"stemmed-searches","basic");
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
@@ -66,8 +66,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -75,8 +73,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -96,9 +93,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertTrue("Proper result is not returned :", convertXMLDocumentToString(resultDoc).contains("<search:highlight>0026"));	
-		
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -108,8 +102,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -117,8 +109,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -140,10 +131,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println(output);
 		System.out.println("Search Result : " + resultDoc.getDocumentURI());
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertTrue("Results are not proper",output.contains("uri=\"/standalone-query/constraint5.xml\"") );    		
-		
-		// release client
-		client.release();		
+		assertTrue("Results are not proper",output.contains("uri=\"/standalone-query/constraint5.xml\"") );    			
 	}
 
 	@Test	
@@ -153,8 +141,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -162,8 +148,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -181,10 +166,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
+		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
@@ -193,9 +175,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println("Running testStandaloneRangeQueryEnhanced");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+		
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -203,8 +183,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -224,9 +203,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -236,8 +212,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -245,8 +219,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -265,9 +238,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -277,8 +247,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -286,8 +254,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -306,10 +273,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);	
 	}
 
 	@Test	
@@ -319,8 +283,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -328,8 +290,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -348,9 +309,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
 	}
 
 	@Test	
@@ -360,8 +318,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -369,8 +325,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -390,10 +345,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();
+		assertXpathEvaluatesTo("4", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
@@ -403,8 +355,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -412,8 +362,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -432,9 +381,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -444,8 +390,6 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -453,8 +397,7 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-query/", "XML");
 		}
 
@@ -477,15 +420,13 @@ public class TestStandaloneQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertTrue("The result is not proper", output.contains("/standalone-query/constraint5.xml"));
-		
-		// release client
-		client.release();		
 	}
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

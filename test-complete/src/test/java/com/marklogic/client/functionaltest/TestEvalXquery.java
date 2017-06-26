@@ -32,9 +32,7 @@ import java.util.TimeZone;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -42,8 +40,6 @@ import org.xml.sax.InputSource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.eval.EvalResult;
 import com.marklogic.client.eval.EvalResult.Type;
@@ -56,8 +52,6 @@ import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.JacksonHandle;
 
-
-
 /*
  * This test is meant for xquery to 
  * verify the eval api can handle all the formats of documents
@@ -67,103 +61,80 @@ import com.marklogic.client.io.JacksonHandle;
 public class TestEvalXquery  extends BasicJavaClientREST {
 	private static String dbName = "TestEvalXqueryDB";
 	private static String [] fNames = {"TestEvalXqueryDB-1"};	
-	private  DatabaseClient client ;
+	private  static DatabaseClient client ;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		 System.out.println("In setup");
 		 TestEvalXquery.configureRESTServer(dbName, fNames);
  	     TestEvalXquery.createUserRolesWithPrevilages("test-eval", "xdbc:eval","any-uri","xdbc:invoke");
- 	     TestEvalXquery.createRESTUser("eval-user", "x", "test-eval");		 
+ 	     TestEvalXquery.createRESTUser("eval-user", "x", "test-eval");
+ 	     client = getDatabaseClientWithDigest("eval-user", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
+		// release client
+    	client.release();
 		cleanupRESTServer(dbName, fNames);
 		TestEvalXquery.deleteRESTUser("eval-user");
 		TestEvalXquery.deleteUserRole("test-eval");
 	}
 
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("eval-user", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running CleanUp script");	
-    	// release client
-    	client.release();
-	}
 /* 
  This method is validating all the return values from xquery
   */
 	void validateReturnTypes(EvalResultIterator evr) throws Exception{
 		boolean inDST = TimeZone.getDefault().inDaylightTime( new Date() );
-		 while(evr.hasNext())
-		 {
+		 while(evr.hasNext()) {
 			 EvalResult er =evr.next();			 
-			 if(er.getType().equals(Type.XML)){
+			 if(er.getType().equals(Type.XML)) {
 				 DOMHandle dh = new DOMHandle();
 				 dh=er.get(dh);
-				 if(dh.get().getDocumentElement().hasChildNodes()){
-//				 System.out.println("Type XML  :"+convertXMLDocumentToString(dh.get()));
+				 if(dh.get().getDocumentElement().hasChildNodes()) {
 				 assertEquals("document has content","<foo attr=\"attribute\"><?processing instruction?><!--comment-->test1</foo>",convertXMLDocumentToString(dh.get()));
-				 }else{
+				 } else {
 					 assertEquals("element node ","<test1/>",convertXMLDocumentToString(dh.get()));
 				 }
 			 }
-			 else if(er.getType().equals(Type.JSON)){
+			 else if(er.getType().equals(Type.JSON)) {
 				 JacksonHandle jh = new JacksonHandle();
 				 jh=er.get(jh);
-//				 System.out.println("Type JSON :"+jh.get().toString());
 				 assertTrue("document has object?",jh.get().has("test"));
 			 }
-			 else if(er.getType().equals(Type.TEXTNODE)){
-				 assertTrue("document contains",er.getAs(String.class).equals("test1"));
-//				 System.out.println("type txt node :"+er.getAs(String.class));
-				
-			 }else if(er.getType().equals(Type.BINARY)){
+			 else if(er.getType().equals(Type.TEXTNODE)) {
+				 assertTrue("document contains",er.getAs(String.class).equals("test1"));				
+			 } else if(er.getType().equals(Type.BINARY)) {
 				 FileHandle fh = new FileHandle();
 				 fh=er.get(fh);
-//				 System.out.println("type binary :"+fh.get().length());
 				 assertEquals("files size",2,fh.get().length());	 
-			 }else if(er.getType().equals(Type.BOOLEAN)){
+			 } else if(er.getType().equals(Type.BOOLEAN)) {
 				 assertTrue("Documents exist?",er.getBoolean());
-//				 System.out.println("type boolean:"+er.getBoolean());
 			 }
-			 else if(er.getType().equals(Type.INTEGER)){
-//				 System.out.println("type Integer: "+er.getNumber().longValue());
+			 else if(er.getType().equals(Type.INTEGER)) {
 				 assertEquals("count of documents ",31,er.getNumber().intValue()); 
 			 }
-			 else if(er.getType().equals(Type.STRING)){
+			 else if(er.getType().equals(Type.STRING)) {
 				//There is git issue 152
 				 assertEquals("String?","xml",er.getString());
 				 System.out.println("type string: "+er.getString());
-			 }else if(er.getType().equals(Type.NULL)){
+			 } else if(er.getType().equals(Type.NULL)) {
 				 //There is git issue 151
-//				 assertNull(er.getAs(String.class));
 				 System.out.println("Testing is empty sequence is NUll?"+er.getAs(String.class));
-			 }else if(er.getType().equals(Type.OTHER)){
+			 } else if(er.getType().equals(Type.OTHER)) {
 				//There is git issue 151
-//				 System.out.println("Testing is Others? "+er.getAs(String.class));
-				  assertTrue("Returns OTHERs",er.getString().contains("PT0S"));
-				 
-			 }else if(er.getType().equals(Type.ANYURI)){
-//				 System.out.println("Testing is AnyUri? "+er.getAs(String.class));
-				 assertEquals("Returns me a uri :","test1.xml",er.getAs(String.class));
-				 
-			 }else if(er.getType().equals(Type.DATE)){
-//				 System.out.println("Testing is DATE? "+er.getAs(String.class));
+				  assertTrue("Returns OTHERs",er.getString().contains("PT0S"));				 
+			 } else if(er.getType().equals(Type.ANYURI)) {
+				 assertEquals("Returns me a uri :","test1.xml",er.getAs(String.class));				 
+			 } else if(er.getType().equals(Type.DATE)) {
 				if (inDST)
 					assertEquals("Returns me a date :", "2002-03-07-07:00",
 							er.getAs(String.class));
 				else
 					assertEquals("Returns me a date :", "2002-03-07-08:00",
 							er.getAs(String.class));
-			 }else if(er.getType().equals(Type.DATETIME)){
-//				 System.out.println("Testing is DATETIME? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.DATETIME)) {
 				 if (inDST)
 					assertEquals("Returns me a dateTime :",
 							"2010-01-06T18:13:50.874-07:00",
@@ -172,58 +143,39 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 					assertEquals("Returns me a dateTime :",
 							"2010-01-06T17:13:50.874-08:00",
 							er.getAs(String.class));
-			 }else if(er.getType().equals(Type.DECIMAL)){
-//				 System.out.println("Testing is Decimal? "+er.getAs(String.class));
-				 assertEquals("Returns me a Decimal :","10.5",er.getAs(String.class));
-				 
-			 }else if(er.getType().equals(Type.DOUBLE)){
-//				 System.out.println("Testing is Double? "+er.getAs(String.class));
-				 assertEquals(1.0471975511966,er.getNumber().doubleValue(),0);
-				 
-			 }else if(er.getType().equals(Type.DURATION)){
+			 } else if(er.getType().equals(Type.DECIMAL)) {
+				 assertEquals("Returns me a Decimal :","10.5",er.getAs(String.class));				 
+			 } else if(er.getType().equals(Type.DOUBLE)) {
+				 assertEquals(1.0471975511966,er.getNumber().doubleValue(),0);				 
+			 } else if(er.getType().equals(Type.DURATION)) {
 				 System.out.println("Testing is Duration? "+er.getAs(String.class));
-//				 assertEquals("Returns me a Duration :",0.4903562,er.getNumber().floatValue());
-			 }else if(er.getType().equals(Type.FLOAT)){
-//				 System.out.println("Testing is Float? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.FLOAT)) {
 				 assertEquals(20,er.getNumber().floatValue(),0);
-			 }else if(er.getType().equals(Type.GDAY)){
-//				 System.out.println("Testing is GDay? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.GDAY)) {
 				 assertEquals("Returns me a GDAY :","---01",er.getAs(String.class)); 
-			 }else if(er.getType().equals(Type.GMONTH)){
-//				 System.out.println("Testing is GMonth "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.GMONTH)) {
 				 assertEquals("Returns me a GMONTH :","--01",er.getAs(String.class)); 
-			 }else if(er.getType().equals(Type.GMONTHDAY)){
-//				 System.out.println("Testing is GMonthDay? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.GMONTHDAY)) {
 				 assertEquals("Returns me a GMONTHDAY :","--12-25-14:00",er.getAs(String.class)); 
-			 }else if(er.getType().equals(Type.GYEAR)){
-//				 System.out.println("Testing is GYear? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.GYEAR)) {
 				 assertEquals("Returns me a GYEAR :","2005-12:00",er.getAs(String.class)); 
-			 }else if(er.getType().equals(Type.GYEARMONTH)){
-//				 System.out.println("Testing is GYearMonth?1976-02 "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.GYEARMONTH)) {
 				 assertEquals("Returns me a GYEARMONTH :","1976-02",er.getAs(String.class));
-			 }else if(er.getType().equals(Type.HEXBINARY)){
-//				 System.out.println("Testing is HEXBINARY? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.HEXBINARY)) {
 				 assertEquals("Returns me a HEXBINARY :","BEEF",er.getAs(String.class));
-			 }else if(er.getType().equals(Type.QNAME)){
-//				 System.out.println("Testing is QNAME integer"+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.QNAME)) {
 				 assertTrue("Returns me a QNAME :",er.getString().contains("integer") || er.getString().contains("fn:empty"));
-			 }else if(er.getType().equals(Type.TIME)){
-//				 System.out.println("Testing is TIME? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.TIME)) {
 				 assertEquals("Returns me a TIME :","10:00:00",er.getAs(String.class));
-			 }else if(er.getType().equals(Type.ATTRIBUTE)){
-//				 System.out.println("Testing is ATTRIBUTE? "+er.getAs(String.class));
-				 assertEquals("Returns me a ATTRIBUTE :","attribute",er.getAs(String.class));
-				 
-			 }else if(er.getType().equals(Type.PROCESSINGINSTRUCTION)){
-//				 System.out.println("Testing is ProcessingInstructions? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.ATTRIBUTE)) {
+				 assertEquals("Returns me a ATTRIBUTE :","attribute",er.getAs(String.class));				 
+			 } else if(er.getType().equals(Type.PROCESSINGINSTRUCTION)) {
 				 assertEquals("Returns me a PROCESSINGINSTRUCTION :","<?processing instruction?>",er.getAs(String.class));
-			 }else if(er.getType().equals(Type.COMMENT)){
-//				 System.out.println("Testing is Comment node? "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.COMMENT)) {
 				 assertEquals("Returns me a COMMENT :","<!--comment-->",er.getAs(String.class));
-			 }else if(er.getType().equals(Type.BASE64BINARY)){
-//				 System.out.println("Testing is Base64Binary  "+er.getAs(String.class));
+			 } else if(er.getType().equals(Type.BASE64BINARY)) {
 				 assertEquals("Returns me a BASE64BINARY :","DEADBEEF",er.getAs(String.class));
-			 }else{
+			 } else {
 				 System.out.println("Got something which is not belongs to anytype we support "+er.getAs(String.class));
 				 assertFalse("getting in else part, missing a type  ",true);
 			 }
@@ -265,33 +217,32 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 	 assertEquals("Content database?",dbName,response3);
 	 ServerEvaluationCall evl = client.newServerEval();
 	 EvalResultIterator evr = evl.xquery(readDoc).eval();
-	 while(evr.hasNext())
-	 {
+	 while(evr.hasNext()) {
 		 EvalResult er =evr.next();
-		 if(er.getType().equals(Type.XML)){
+		 if(er.getType().equals(Type.XML)) {
 			 DOMHandle dh = new DOMHandle();
 			 dh=er.get(dh);
 			 assertEquals("document has content","<foo>test1</foo>",convertXMLDocumentToString(dh.get()));
 		 }
-		 else if(er.getType().equals(Type.JSON)){
+		 else if(er.getType().equals(Type.JSON)) {
 			 JacksonHandle jh = new JacksonHandle();
 			 jh=er.get(jh);
 			 assertTrue("document has object?",jh.get().has("test"));
 		 }
-		 else if(er.getType().equals(Type.TEXTNODE)){
+		 else if(er.getType().equals(Type.TEXTNODE)) {
 			 assertTrue("document contains",er.getAs(String.class).equals("This is a text document."));
 			
-		 }else if(er.getType().equals(Type.BINARY)){
+		 } else if(er.getType().equals(Type.BINARY)) {
 			 FileHandle fh = new FileHandle();
 			 fh=er.get(fh);
 			 assertEquals("files size",2,fh.get().length());
 			 
-		 }else{
+		 } else {
 			 System.out.println("Something went wrong");
-		 }
-		 
+		 }		 
 	 }
 	}
+	
 	//This test is intended to test eval(T handle), passing input stream handle with xqueries that retruns different types, formats
 	@Test
 	public void testXqueryReturningDifferentTypesAndFormatsWithHandle() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -300,16 +251,17 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 	 InputStreamHandle ish = new InputStreamHandle();
 	 ish.set(inputStream);
 	 
-	try{	 
+	try {	 
 		EvalResultIterator evr = client.newServerEval().xquery(ish).eval();
 		this.validateReturnTypes(evr);
-	}catch(Exception e){
+	} catch(Exception e) {
 		throw e;
 	}
-	finally{
+	finally {
 		inputStream.close();
 	}
 	}
+	
 	//Test is intended to test different types of variable passed to xquery from java and check return node types,data types
 	@Test
 	public void testXqueryDifferentVariableTypes() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -320,7 +272,7 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 		Document doc = db.parse(is);
 		String jsonNode = "{ \"a\" : {\"obj\": \"value\"}, \"b\" : \"s0\",\"c1\" : 1,\"c2\" : 2,\"d\" : null,\"f\" : true,\"g\" : [\"s1\", \"s2\", \"s3\" ]}";
 	    System.out.println(this.convertXMLDocumentToString(doc));
-	 	try{
+	 	try {
 		String query1 = "declare namespace test=\"http://marklogic.com/test\";"
 						+"declare variable $test:myString as xs:string external;"
 						+"declare variable $myBool as xs:boolean external;"
@@ -356,63 +308,52 @@ public class TestEvalXquery  extends BasicJavaClientREST {
         .addVariableAs("myXmlNode",new DOMHandle(doc) ).addVariableAs("myNull", null);
         //.addVariableAs("myJsonNode", new StringHandle(jsonNode).withFormat(Format.JSON));
 		evr = evl.eval();
-		 while(evr.hasNext())
-		 {
+		 while(evr.hasNext()) {
 			 EvalResult er =evr.next();
-			 if(er.getType().equals(Type.JSON)){
+			 if(er.getType().equals(Type.JSON)) {
 				 JacksonHandle jh = new JacksonHandle();
 				 jh=er.get(jh);
 
-				 if(jh.get().isArray()){
-//					 System.out.println("Type Array :"+jh.get().toString());
+				 if(jh.get().isArray()) {
 					 assertEquals("array value at index 0 ",1,jh.get().get(0).asInt());
 					 assertEquals("array value at index 1 ",2,jh.get().get(1).asInt());
 					 assertEquals("array value at index 2 ",3,jh.get().get(2).asInt());
 				 }
-				 else if(jh.get().isObject()){
+				 else if(jh.get().isObject()) {
 					 System.out.println("Type Object :"+jh.get().toString());
-					 if(jh.get().has("foo")){
+					 if(jh.get().has("foo")) {
 						 assertNull("this object also has null node",jh.get().get("testNull").textValue());
-					 }else if(jh.get().has("obj"))
-					 {
+					 } else if(jh.get().has("obj")) {
 						 assertEquals("Value of the object is ","value",jh.get().get("obj").asText());
-					 }else{
+					 } else {
 						 assertFalse("getting a wrong object ",true);
-					 }
-					 
+					 }					 
 				 }
-				 else if(jh.get().isNumber()){
-//					 System.out.println("Type Number :"+jh.get().toString());
+				 else if(jh.get().isNumber()) {
 					 assertEquals("Number value",1,jh.get().asInt());
 				 } 
-				 else if(jh.get().isNull()){
-//					 System.out.println("Type Null :"+jh.get().toString());
+				 else if(jh.get().isNull()) {
 					 assertNull("Returned Null",jh.get().textValue());
 				 }
-				 else if(jh.get().isBoolean()){
-//					 System.out.println("Type boolean :"+jh.get().toString());
+				 else if(jh.get().isBoolean()) {
 					 assertTrue("Boolean value returned false",jh.get().asBoolean());
 				 }
-				 else{
-//					 System.out.println("Running into different types than expected");
+				 else {
 					 assertFalse("Running into different types than expected",true);
 				 }
-
 			 }
-			 else if(er.getType().equals(Type.TEXTNODE)){
+			 else if(er.getType().equals(Type.TEXTNODE)) {
 				 assertTrue("document contains",er.getAs(String.class).contains("s"));
-//				 System.out.println("type txt node :"+er.getAs(String.class));
-			 }else{
+			 } else {
 				 System.out.println("No corresponding type found for :"+er.getType());
 			 }
-			 }
+		}
 		
-	}catch(Exception e){
+	} catch(Exception e) {
 		throw e;
 	}
 	}
-	
-	
+		
 	@Test(expected = java.lang.IllegalStateException.class)
 	public void testMultipleXqueryfnOnServerEval() {
 	 String insertQuery = "xdmp:document-insert(\"test1.xml\",<foo>test1</foo>)";
@@ -427,6 +368,7 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 	 String response3 = client.newServerEval().xquery(query3).evalAs(String.class);
 	 System.out.println(response3);
 	}
+	
 	//Issue 156 exist for this, have test cases where you can pass, element node, text node, binary node as an external variable 
 	@Test(expected = com.marklogic.client.FailedRequestException.class)
 	public void testXqueryWithExtVarAsNode() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -440,15 +382,13 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 			ServerEvaluationCall evl= client.newServerEval().xquery(query1);
 			evl.addVariableAs("myXmlNode",new DOMHandle(doc));
 			EvalResultIterator evr = evl.eval();
-			 while(evr.hasNext())
-				 {
+			 while(evr.hasNext()) {
 					 EvalResult er =evr.next();
 					 DOMHandle dh = new DOMHandle();
 					 dh=er.get(dh);
-//					 System.out.println("Type XML  :"+convertXMLDocumentToString(dh.get()));
 					 assertEquals("document has content","<foo attr=\"attribute\"><?processing instruction?><!--comment-->test1</foo>",convertXMLDocumentToString(dh.get()));
 				 }
-		        }catch(Exception e){
+		        } catch(Exception e) {
 				throw e;
 			}
 		}
@@ -461,9 +401,10 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 
 		int restPort = getRestServerPort();
 		String restServerName = getRestServerName();
+		String hostname = getRestServerHostName();
 		
-		DatabaseClient	moduleClient = getDatabaseClientOnDatabase("localhost", restPort,(restServerName+"-modules"),"admin", "admin", Authentication.DIGEST);
-	try{
+		DatabaseClient	moduleClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort,(restServerName+"-modules"),"admin", "admin");
+	try {
 		inputStream = new FileInputStream("src/test/java/com/marklogic/client/functionaltest/data/xquery-modules-with-diff-variable-types.xqy");
 		InputStreamHandle ish = new InputStreamHandle();
 		ish.set(inputStream);
@@ -485,13 +426,12 @@ public class TestEvalXquery  extends BasicJavaClientREST {
 		EvalResultIterator evr = evl.eval();
 		this.validateReturnTypes(evr);
 		
-	}catch(Exception e){
+	} catch(Exception e) {
 		throw e;
 	}
-	finally{
+	finally {
 		if(inputStream != null) {inputStream.close();}
 		moduleClient.release();
-	}
-	
+	}	
 	}
 }

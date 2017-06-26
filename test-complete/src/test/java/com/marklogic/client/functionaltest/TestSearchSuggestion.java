@@ -28,7 +28,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.SuggestDefinition;
 
@@ -36,9 +35,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 	private static String dbName = "SearchSuggestionDB";
 	private static String [] fNames = {"SearchSuggestionDB-1"};
+	private static DatabaseClient client = null;
 	
-	
-
 	@BeforeClass 
 	public static void setUp() throws Exception 
 	{
@@ -48,6 +46,7 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		setupAppServicesConstraint(dbName);
 		addRangeElementIndex(dbName, "string", "http://action/", "title", "http://marklogic.com/collation/");
 		addRangeElementIndex(dbName, "string", "http://noun/", "title", "http://marklogic.com/collation/");
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -65,11 +64,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "suggestionOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -81,16 +77,12 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
 		assertTrue("suggestion is wrong", suggestions[0].contains("Vannevar Bush"));
-		assertTrue("suggestion is wrong", suggestions[1].contains("Vannevar served"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[1].contains("Vannevar served"));			
 	}
 
 	@Test	
@@ -101,11 +93,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "suggestionOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -121,15 +110,11 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
-		assertTrue("suggestion is wrong", suggestions[0].contains("Vannevar served"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[0].contains("Vannevar served"));			
 	}
 
 	@Test	
@@ -140,11 +125,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"multibyte1.xml", "multibyte2.xml", "multibyte3.xml"};
 		String queryOptionName = "suggestionOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -156,15 +138,11 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
-		assertTrue("suggestion is wrong", suggestions[0].contains("上海"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[0].contains("上海"));			
 	}
 
 	@Test	
@@ -175,11 +153,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "suggestionOpt2.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -192,16 +167,12 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
 		assertTrue("suggestion is wrong", suggestions[0].contains("12.34"));
-		assertTrue("suggestion is wrong", suggestions[1].contains("123.45"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[1].contains("123.45"));			
 	}
 
 	@Test	
@@ -212,11 +183,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "suggestionOpt3.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -228,15 +196,11 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
-		assertTrue("suggestion is wrong", suggestions[0].contains("2005-01-01"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[0].contains("2005-01-01"));			
 	}
 
 	@Test	
@@ -247,11 +211,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"suggestion1.xml"};
 		String queryOptionName = "suggestionOpt4.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -266,17 +227,13 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
 		assertTrue("suggestion is wrong", suggestions[0].contains("noun:actor"));
 		assertTrue("suggestion is wrong", suggestions[1].contains("noun:actress"));
-		assertTrue("suggestion is wrong", suggestions[2].contains("noun:apricott"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[2].contains("noun:apricott"));			
 	}
 
 	@Test	
@@ -287,11 +244,8 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 		String[] filenames = {"suggestion1.xml"};
 		String queryOptionName = "suggestionOpt4.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/ss/", "XML");
 		}
 
@@ -305,22 +259,20 @@ public class TestSearchSuggestion extends BasicJavaClientREST {
 
 		String[] suggestions = queryMgr.suggest(def);
 
-		for(int i = 0; i < suggestions.length; i++)
-		{
+		for(int i = 0; i < suggestions.length; i++) {
 			System.out.println(suggestions[i]);
 		}
 
 		assertTrue("suggestion is wrong", suggestions[0].contains("act"));
-		assertTrue("suggestion is wrong", suggestions[1].contains("acting"));
-
-		// release client
-		client.release();		
+		assertTrue("suggestion is wrong", suggestions[1].contains("acting"));				
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

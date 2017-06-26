@@ -33,19 +33,19 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 public class TestDOMHandle extends BasicJavaClientREST {
 	
-	
 	private static String dbName = "DOMHandleDB";
 	private static String [] fNames = {"DOMHandleDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 	
 	@Test	public void testXmlCRUD() throws KeyManagementException, NoSuchAlgorithmException, IOException,  SAXException, ParserConfigurationException
@@ -57,9 +57,6 @@ public class TestDOMHandle extends BasicJavaClientREST {
 		
 		XMLUnit.setIgnoreWhitespace(true);
 		XMLUnit.setNormalizeWhitespace(true);
-		
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// write docs
 		 writeDocumentUsingDOMHandle(client, filename, uri, "XML");
@@ -102,25 +99,20 @@ public class TestDOMHandle extends BasicJavaClientREST {
 	    
 		// read the deleted document
 	    String exception = "";
-	    try
-	    {
+	    try {
 	    	readDocumentUsingInputStreamHandle(client, uri + filename, "XML");
 	    } catch (Exception e) { exception = e.toString(); }
 	    
 	    String expectedException = "Could not read non-existent document";
 	    boolean documentIsDeleted = exception.contains(expectedException);
 	    assertTrue("Document is not deleted", documentIsDeleted);
-
-	    //assertFalse("Document is not deleted", isDocumentExist(client, uri + filename, "XML"));
-	    
-		// release client
-		client.release();
 	}
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

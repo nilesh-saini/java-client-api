@@ -26,16 +26,13 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentPage;
@@ -61,10 +58,8 @@ import com.marklogic.client.io.StringHandle;
  */
 public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 	private static String dbName = "TestBulkReadWriteMetaDataChangeDB";
-	private static String [] fNames = {"TestBulkReadWriteMetaDataChangeDB-1"};
-	
-	
-	private  DatabaseClient client ;
+	private static String [] fNames = {"TestBulkReadWriteMetaDataChangeDB-1"};	
+	private static DatabaseClient client = null;
 
 	/**
 	 * @throws java.lang.Exception
@@ -75,6 +70,8 @@ public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 		
 		configureRESTServer(dbName, fNames);
 		createRESTUser("app-user", "password", "rest-writer","rest-reader" );
+		// create new connection for each test below
+		client = getDatabaseClientWithDigest("app-user", "password");
 	}
 
 	/**
@@ -82,28 +79,11 @@ public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-		deleteRESTUser("app-user");
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("app-user", "password", Authentication.DIGEST);
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
+		deleteRESTUser("app-user");
 	}
 
 	public DocumentMetadataHandle setMetadata(){
@@ -308,6 +288,7 @@ public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 		validateUpdatedMetadataProperties(mhUpd);
 		mhUpd = null;
 	}
+	
 	@Test
 	public void testWriteMultipleJacksonPoJoDocsWithMetadata() throws KeyManagementException, NoSuchAlgorithmException, Exception  
 	{
@@ -410,7 +391,6 @@ public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 		}
 	}
 
-
 	/* 
 	 * * Purpose: To validate: DocumentManager::readMetadata(uri, MetdataHandle, Transaction)
 	 * This test verifies document meta-data reads from an open database transaction in the representation provided by the handle to call readMetadata.
@@ -454,7 +434,6 @@ public class TestBulkReadWriteMetaDataChange  extends BasicJavaClientREST {
 			transaction.rollback();
 		}
 	}
-
 
 	/* 
 	 * * Purpose: To validate DocumentManager readMetadata(String... uris) without Transaction

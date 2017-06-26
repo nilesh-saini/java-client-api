@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.Format;
@@ -44,12 +43,14 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 
 	private static String dbName = "TestQueryOptionBuilderSearchableExpressionDB";
 	private static String [] fNames = {"TestQueryOptionBuilderSearchableExpressionDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass 
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -64,8 +65,6 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		System.out.println("Running testSearchableExpressionChildAxis");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -113,10 +112,7 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("The Bush article described a device called a Memex.", "string(//*[local-name()='result'][1]//*[local-name()='p'])", resultDoc);
-		assertXpathEvaluatesTo("Vannevar Bush wrote an article for The Atlantic Monthly", "string(//*[local-name()='result'][2]//*[local-name()='p'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("Vannevar Bush wrote an article for The Atlantic Monthly", "string(//*[local-name()='result'][2]//*[local-name()='p'])", resultDoc);		
 	} 
 
 	@Test	
@@ -125,8 +121,6 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		System.out.println("Running testSearchableExpressionDescendantAxis");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -175,10 +169,7 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("The Bush article", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
 		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][2]//*[local-name()='title'])", resultDoc);
-		assertXpathEvaluatesTo("The memex", "string(//*[local-name()='result'][3]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("The memex", "string(//*[local-name()='result'][3]//*[local-name()='title'])", resultDoc);		
 	}
 
 	@Test	
@@ -187,10 +178,7 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		System.out.println("Running testSearchableExpressionOrOperator");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
-		// write docs
+	    // write docs
 		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/search-expr-or-op/", "XML");
 		}
@@ -242,9 +230,6 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		assertXpathEvaluatesTo("Bush", "string(//*[local-name()='result'][1]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("Bush", "string(//*[local-name()='result'][3]//*[local-name()='highlight'])", resultDoc);
-
-		// release client
-		client.release();	
 	} 
 
 	@Test	
@@ -253,8 +238,6 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		System.out.println("Running testSearchableExpressionDescendantOrSelf");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -305,9 +288,7 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		Document resultDoc = resultsHandle.get();
 		//System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);			
 	} 
 
 	@Test	
@@ -316,8 +297,6 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		System.out.println("Running testSearchableExpressionFunction");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -368,15 +347,14 @@ public class TestQueryOptionBuilderSearchableExpression extends BasicJavaClientR
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/search-expr-func/constraint3.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo("/search-expr-func/constraint3.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);			
 	} 
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

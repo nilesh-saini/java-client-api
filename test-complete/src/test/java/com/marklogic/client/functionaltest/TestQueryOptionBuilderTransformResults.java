@@ -36,7 +36,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -47,15 +46,15 @@ public class TestQueryOptionBuilderTransformResults extends BasicJavaClientREST 
 
 	private static String dbName = "TestQueryOptionBuilderTransformResultsDB";
 	private static String [] fNames = {"TestQueryOptionBuilderTransformResultsDB-1"};
+	private static DatabaseClient client = null;
 	
-	
-
 	@BeforeClass	
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -73,11 +72,8 @@ public class TestQueryOptionBuilderTransformResults extends BasicJavaClientREST 
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/trans-res-with-snip-func/", "XML");
 		}
 
@@ -127,15 +123,10 @@ public class TestQueryOptionBuilderTransformResults extends BasicJavaClientREST 
 		String resultDoc = resultsHandle.get();
 		
 		JsonNode jn = new ObjectMapper().readTree(resultDoc); 
-//		System.out.println(resultDoc);
 		System.out.println(jn.get("results").findValue("uri").textValue());
 		String expectedResult = "{\"snippet-format\":\"snippet\",\"total\":1,\"start\":1,\"page-length\":10,\"results\":[{\"index\":1,\"uri\":\"/trans-res-with-snip-func/constraint3.xml\"";
-		
-		
+				
 		assertTrue("Result is wrong",jn.get("results").findValue("uri").textValue().contains("/trans-res-with-snip-func/constraint3.xml"));
-
-		// release client
-		client.release();	
 	}
 
 	@Test	
@@ -145,11 +136,8 @@ public class TestQueryOptionBuilderTransformResults extends BasicJavaClientREST 
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/trans-res-with-emp-snip-func/", "XML");
 		}
 
@@ -194,17 +182,14 @@ public class TestQueryOptionBuilderTransformResults extends BasicJavaClientREST 
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/trans-res-with-emp-snip-func/constraint3.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		//assertXpathEvaluatesTo("groundbreaking", "string(//*[local-name()='result']//*[local-name()='highlight'][2])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

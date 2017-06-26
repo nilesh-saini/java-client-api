@@ -44,9 +44,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
-import com.marklogic.client.DatabaseClientFactory.SecurityContext;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.expression.PlanBuilder;
@@ -56,7 +54,6 @@ import com.marklogic.client.expression.PlanBuilder.ModifyPlan;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
-import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.row.RowManager;
@@ -64,7 +61,6 @@ import com.marklogic.client.row.RowRecord;
 import com.marklogic.client.row.RowSet;
 import com.marklogic.client.type.PlanColumn;
 import com.marklogic.client.type.PlanParamExpr;
-import com.marklogic.client.type.PlanSortKeySeq;
 import com.marklogic.client.type.PlanSystemColumn;
 import com.marklogic.client.type.XsStringVal;
 
@@ -138,7 +134,7 @@ public class TestOpticOnViews extends BasicJavaClientREST {
 		DatabaseClient schemaDBclient = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), schemadbName, new DigestAuthContext("admin", "admin"));
 				
 		//You can enable the triple positions index for faster near searches using cts:triple-range-query.		
-		client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), new DigestAuthContext("admin", "admin") );
+		client = DatabaseClientFactory.newClient(getRestServerHostName(), getRestServerPort(), new DigestAuthContext("admin", "admin"));
 		
 		// Install the TDE templates into schemadbName DB
 		// loadFileToDB(client, filename, docURI, collection, document format)

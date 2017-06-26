@@ -17,7 +17,9 @@
 package com.marklogic.client.functionaltest;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +41,6 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -53,8 +54,7 @@ import com.marklogic.client.query.RawCombinedQueryDefinition;
 public class TestRawCombinedQuery extends BasicJavaClientREST {
 	private static String dbName = "TestRawCombinedQueryDB";
 	private static String [] fNames = {"TestRawCombinedQueryDB-1"};
-	
-	
+	private static DatabaseClient client = null;
 	
 	@BeforeClass	
 	public static void setUp() throws Exception 
@@ -62,7 +62,9 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
+	
 	@After
 	public void testCleanUp() throws Exception
 	{
@@ -77,8 +79,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -86,8 +86,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -116,10 +115,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertEquals("application/xml",resultsHandle.getMimetype());
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);	
 	}
 
 	@Test	
@@ -129,8 +125,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -138,8 +132,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -150,9 +143,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		// create a handle for the search criteria
 		StringHandle rawHandle = new StringHandle(combinedQuery);
-		//FileHandle rawHandle = new FileHandle(file); // bug 21107
-		//rawHandle.setMimetype("application/xml");
-
+		
 		QueryManager queryMgr = client.newQueryManager();
 
 		// create a search definition based on the handle
@@ -169,9 +160,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -182,8 +170,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -192,8 +178,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -221,9 +206,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -234,8 +216,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -243,8 +223,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -271,10 +250,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);				
 	}
 
 	@Test	
@@ -284,9 +260,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "valueConstraintWithoutIndexSettingsAndNSOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -294,8 +267,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -308,8 +280,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		// create a handle for the search criteria
 		StringHandle rawHandle = new StringHandle(combinedQuery);
-		//FileHandle rawHandle = new FileHandle(file);
-		//rawHandle.setMimetype("application/xml");
 		rawHandle.setFormat(Format.JSON);
 
 		QueryManager queryMgr = client.newQueryManager();
@@ -326,10 +296,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		System.out.println(resultDoc);
 
-		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint1.xml"));
-
-		// release client
-		client.release();		
+		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint1.xml"));				
 	}
 
 	@Test	
@@ -338,9 +305,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawCombinedQueryJSON");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -348,8 +312,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -360,8 +323,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		// create a handle for the search criteria
 		StringHandle rawHandle = new StringHandle(combinedQuery);
-		//FileHandle rawHandle = new FileHandle(file);
-		//rawHandle.setMimetype("application/xml");
 		rawHandle.setFormat(Format.JSON);
 
 		QueryManager queryMgr = client.newQueryManager();
@@ -378,10 +339,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		System.out.println(resultDoc);
 
-		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint5.xml"));
-
-		// release client
-		client.release();		
+		assertTrue("document is not returned", resultDoc.contains("/raw-combined-query/constraint5.xml"));				
 	}
 
 	@Test	
@@ -390,9 +348,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawCombinedQueryWildcard");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -400,8 +355,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -412,9 +366,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		// create a handle for the search criteria
 		StringHandle rawHandle = new StringHandle(combinedQuery);
-		//FileHandle rawHandle = new FileHandle(file); // bug 21107
-		//rawHandle.setMimetype("application/xml");
-
 		QueryManager queryMgr = client.newQueryManager();
 
 		// create a search definition based on the handle
@@ -432,9 +383,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -447,9 +395,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
 		DocumentMetadataHandle metadataHandle2 = new DocumentMetadataHandle();
@@ -495,9 +440,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -510,8 +452,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -557,10 +497,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("Vannevar Bush", "string(//*[local-name()='result'][1]//*[local-name()='title'])", resultDoc);			
 	}
 
 	@Test	
@@ -569,12 +506,8 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		System.out.println("Running testRawCombinedQueryField");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/field-constraint/", "XML");
 		}
 
@@ -602,10 +535,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("memex", "string(//*[local-name()='result'][1]//*[local-name()='match'][1]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][1]//*[local-name()='match'][2]//*[local-name()='highlight'])", resultDoc);
 		assertXpathEvaluatesTo("Memex", "string(//*[local-name()='result'][1]//*[local-name()='match'][3]//*[local-name()='highlight'])", resultDoc);
-		assertXpathEvaluatesTo("Bush", "string(//*[local-name()='result'][2]//*[local-name()='match'][1]//*[local-name()='highlight'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("Bush", "string(//*[local-name()='result'][2]//*[local-name()='match'][1]//*[local-name()='highlight'])", resultDoc);			
 	}
 
 	@Test	
@@ -615,11 +545,8 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"pathindex1.xml", "pathindex2.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/path-index-raw/", "XML");
 		}		
 
@@ -645,10 +572,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/path-index-raw/pathindex2.xml", "string(//*[local-name()='result'][1]//@*[local-name()='uri'])", resultDoc);
-		assertXpathEvaluatesTo("/path-index-raw/pathindex1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/path-index-raw/pathindex1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);	
 	}
 
 	@Test	
@@ -661,8 +585,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String filename3 = "constraint3.xml";
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -716,10 +638,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		String resultDoc = resultsHandle.get();
 
 		System.out.println(resultDoc);
-		assertTrue("Returned result is not correct", resultDoc.contains("<search:result index=\"1\" uri=\"/collection-constraint/constraint1.xml\" path=\"fn:doc(&quot;/collection-constraint/constraint1.xml&quot;)\" score=\"28672\" confidence=\"0.6951694\" fitness=\"0.9213213\" href=\"/v1/documents?uri=%2Fcollection-constraint%2Fconstraint1.xml\" mimetype=\"application/xml\" format=\"xml\">"));
-
-		// release client
-		client.release();		
+		assertTrue("Returned result is not correct", resultDoc.contains("<search:result index=\"1\" uri=\"/collection-constraint/constraint1.xml\" path=\"fn:doc(&quot;/collection-constraint/constraint1.xml&quot;)\" score=\"28672\" confidence=\"0.6951694\" fitness=\"0.9213213\" href=\"/v1/documents?uri=%2Fcollection-constraint%2Fconstraint1.xml\" mimetype=\"application/xml\" format=\"xml\">"));		
 	}
 
 	@Test	
@@ -729,11 +648,8 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/field-constraint/", "XML");
 		}
 
@@ -768,10 +684,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		assertTrue("total document returned is incorrect", resultDoc.contains("total=\"2\""));
 		assertTrue("returned doc is incorrect", resultDoc.contains("uri=\"/field-constraint/constraint5.xml\""));
-		assertTrue("returned doc is incorrect", resultDoc.contains("uri=\"/field-constraint/constraint1.xml\""));
-
-		// release client
-		client.release();		
+		assertTrue("returned doc is incorrect", resultDoc.contains("uri=\"/field-constraint/constraint1.xml\""));	
 	}
 	
 	/*
@@ -790,8 +703,6 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -799,8 +710,7 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/raw-combined-query/", "XML");
 		}
 
@@ -822,28 +732,21 @@ public class TestRawCombinedQuery extends BasicJavaClientREST {
 		JacksonHandle resultsHandle = new JacksonHandle();
 		queryMgr.search(querydef, resultsHandle);
 
-		// get the result
-		//Document resultDoc = resultsHandle.get();
+		// get the result		
 		JsonNode resultNode = resultsHandle.get().get("metrics");
 		System.out.println("Mime Type : "+resultsHandle.getMimetype());
 		System.out.println(resultNode);
 		// Make sure response does not have extract-resolution-time property in the metrics
 		assertNull(resultNode.get("extract-resolution-time"));
 		// End of Negative test
-		
-		// Start of positive tests
-		
-		
-		//End of positive tests
-		
-		// release client
-		client.release();		
 	}
 	
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

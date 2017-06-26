@@ -36,7 +36,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
@@ -50,15 +49,15 @@ public class TestSearchOnJSON extends BasicJavaClientREST {
 
 	private static String dbName = "TestSearchOnJSONDB";
 	private static String [] fNames = {"TestSearchOnJSONDB-1"};
+	private static DatabaseClient client = null;
 	
-	
-
 	@BeforeClass 
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -74,8 +73,6 @@ public class TestSearchOnJSON extends BasicJavaClientREST {
 		System.out.println("Running testRoundtrippingQueryOption");
 
 		String queryOptionName = "valueConstraintWildCardOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for writing query options
 		QueryOptionsManager optionsMgr = client.newServerConfigManager().newQueryOptionsManager();
@@ -111,10 +108,7 @@ public class TestSearchOnJSON extends BasicJavaClientREST {
 		writeHandle.set(output);
 		writeHandle.setFormat(Format.JSON);
 		optionsMgr.writeOptions(queryOptionNameJson, writeHandle);
-		System.out.println("Write " + queryOptionNameJson + " to database");
-
-		// release client
-		client.release();	
+		System.out.println("Write " + queryOptionNameJson + " to database");	
 	}
 
 	@Test	
@@ -128,8 +122,6 @@ public class TestSearchOnJSON extends BasicJavaClientREST {
 		String filename4 = "constraint4.xml";
 		String filename5 = "constraint5.xml";
 		String queryOptionName = "appservicesConstraintCombinationOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create and initialize a handle on the metadata
 		DocumentMetadataHandle metadataHandle1 = new DocumentMetadataHandle();
@@ -203,16 +195,15 @@ public class TestSearchOnJSON extends BasicJavaClientREST {
 		boolean isTitleCorrect = resultString.contains("Vannevar Bush");
 		assertTrue("Returned total document is incorrect", isTotalCorrect);
 		assertTrue("Returned document URI is incorrect", isUriCorrect);
-		assertTrue("Returned document title is incorrect", isTitleCorrect);
-
-		// release client
-		client.release();		
+		assertTrue("Returned document title is incorrect", isTitleCorrect);	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

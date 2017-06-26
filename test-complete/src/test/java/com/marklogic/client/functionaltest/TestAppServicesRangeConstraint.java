@@ -35,26 +35,26 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesRangeConstraint extends BasicJavaClientREST {
 
-//	private String serverName = "";
 	private static String dbName = "AppServicesRangeConstraintDB";
 	private static String [] fNames = {"AppServicesRangeConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  System.out.println("In setup");
-//	  super.setUp();
-//	  serverName = getConnectedServerName();
+
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
+
 @After
 public  void testCleanUp() throws Exception
 {
@@ -70,11 +70,8 @@ public  void testCleanUp() throws Exception
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "rangeConstraintWithWordSearchOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/range-constraint/", "XML");
 		}
 		
@@ -102,9 +99,7 @@ public  void testCleanUp() throws Exception
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:or-query((cts:element-range-query(fn:QName(\"http://purl.org/dc/elements/1.1/\",\"date\"), \"=\", xs:date(\"2006-02-02\"), (), 1), cts:word-query(\"policymaker\", (\"lang=en\"), 1)), ()), (\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 		
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-		
-		// release client
-		client.release();		
+				
 	}
 
 	/*public void testNegativeWithoutIndexSettings() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
@@ -113,12 +108,9 @@ public  void testCleanUp() throws Exception
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "rangeConstraintNegativeWithoutIndexSettingsOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/range-constraint/", "XML");
 		}
 		
@@ -146,10 +138,7 @@ public  void testCleanUp() throws Exception
 		
 		//assertEquals("Wrong exception", expectedException, exception);
 	    boolean exceptionIsThrown = exception.contains(expectedException);
-	    assertTrue("Exception is not thrown", exceptionIsThrown);
-		
-		// release client
-		client.release();		
+	    assertTrue("Exception is not thrown", exceptionIsThrown);		
 	}*/
 
 @Test
@@ -159,12 +148,9 @@ public  void testCleanUp() throws Exception
 		
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 		String queryOptionName = "rangeConstraintNegativeTypeMismatchOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 				
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/range-constraint/", "XML");
 		}
 		
@@ -193,15 +179,14 @@ public  void testCleanUp() throws Exception
 		//assertEquals("Wrong exception", expectedException, exception);
 		boolean exceptionIsThrown = exception.contains(expectedException);
 	    assertTrue("Exception is not thrown", exceptionIsThrown);
-		
-		// release client
-		client.release();		
 	}
+
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-//		super.tearDown();
 	}
 }

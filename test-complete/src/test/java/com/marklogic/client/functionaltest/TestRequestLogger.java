@@ -28,7 +28,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.FileHandle;
@@ -37,7 +36,7 @@ public class TestRequestLogger extends BasicJavaClientREST {
 
 	private static String dbName = "TestRequestLoggerDB";
 	private static String [] fNames = {"TestRequestLoggerDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass 
 	public static void setUp() throws Exception 
@@ -45,6 +44,7 @@ public class TestRequestLogger extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
@@ -54,8 +54,6 @@ public class TestRequestLogger extends BasicJavaClientREST {
 
 		String filename = "bbq1.xml";
 		String uri = "/request-logger/";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		File file = new File("src/test/java/com/marklogic/client/functionaltest/data/" + filename);
 
@@ -89,17 +87,15 @@ public class TestRequestLogger extends BasicJavaClientREST {
 		docMgr.stopLogging();
 
 		String expectedContentMax = "9223372036854775807";
-		assertEquals("Content log is not equal", expectedContentMax, Long.toString(logger.getContentMax()));
-
-		// release client
-		client.release();
+		assertEquals("Content log is not equal", expectedContentMax, Long.toString(logger.getContentMax()));		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

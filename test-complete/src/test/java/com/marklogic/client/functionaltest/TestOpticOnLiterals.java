@@ -42,7 +42,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.ExtensionMetadata.ScriptLanguage;
@@ -241,7 +240,7 @@ public class TestOpticOnLiterals extends BasicJavaClientREST {
         createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke");
 		createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
 
-		DatabaseClient clientRes = DatabaseClientFactory.newClient(getRestAppServerHostName(), getRestServerPort(), dbName, "eval-user", "x", Authentication.DIGEST);		
+		DatabaseClient clientRes = DatabaseClientFactory.newClient(getRestAppServerHostName(), getRestServerPort(), dbName, new DigestAuthContext("admin", "admin"));		
 		resourceMgr = clientRes.newServerConfigManager().newResourceExtensionsManager();
 		ExtensionMetadata resextMetadata = new ExtensionMetadata();
 		resextMetadata.setTitle("BasicJSTest");

@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DOMHandle;
@@ -45,6 +44,7 @@ public class TestBug18736 extends BasicJavaClientREST {
 
 	private static String dbName = "Bug18736DB";
 	private static String [] fNames = {"Bug18736DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -52,6 +52,7 @@ public class TestBug18736 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 @Test
@@ -61,22 +62,6 @@ public class TestBug18736 extends BasicJavaClientREST {
 		
 		String filename = "constraint1.xml";
 		String docId = "/content/without-xml-ext";
-		//XpathEngine xpathEngine;
-		
-		/*Map<String,String> xpathNS = new HashMap<>();
-		xpathNS.put("", "http://purl.org/dc/elements/1.1/");
-		SimpleNamespaceContext xpathNsContext = new SimpleNamespaceContext(xpathNS);
-
-		XMLUnit.setIgnoreAttributeOrder(true);
-		XMLUnit.setIgnoreWhitespace(true);
-		XMLUnit.setNormalize(true);
-		XMLUnit.setNormalizeWhitespace(true);
-		XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
-		
-		xpathEngine = XMLUnit.newXpathEngine();
-		xpathEngine.setNamespaceContext(xpathNsContext);*/
-
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		
@@ -106,15 +91,13 @@ public class TestBug18736 extends BasicJavaClientREST {
         //Document expectedDoc = expectedXMLDocument(filename);
      		
      	//assertXMLEqual("Write XML difference", expectedDoc, readDoc);
-                
-		// release client
-	    client.release();	
 	}
 @AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

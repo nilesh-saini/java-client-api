@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 public class TestWordConstraint extends BasicJavaClientREST {
 
@@ -35,26 +34,23 @@ public class TestWordConstraint extends BasicJavaClientREST {
 	static String queryOptionName = "wordConstraintOpt.xml"; 
 	private static String dbName = "WordConstraintDB";
 	private static String [] fNames = {"WordConstraintDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testElementWordConstraint() throws KeyManagementException, NoSuchAlgorithmException, IOException
-	{
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
+	{		
 		// write docs
-		for(String filename:filenames)
-		{
+		for(String filename:filenames) {
 			writeDocumentReaderHandle(client, filename, "/word-constraint/", "XML");
 		}
-
 
 		// write the query options to the database
 		setQueryOption(client, queryOptionName);
@@ -69,16 +65,15 @@ public class TestWordConstraint extends BasicJavaClientREST {
 
 		System.out.println(searchResult);
 
-		assertEquals("Search result difference", expectedSearchResult, searchResult);
-
-		// release client
-		client.release();
+		assertEquals("Search result difference", expectedSearchResult, searchResult);	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

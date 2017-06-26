@@ -32,19 +32,21 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.FileHandle;
 public class TestDocumentMimetype extends BasicJavaClientREST {
 	
 	private static String dbName = "TestDocumentMimetypeDB";
 	private static String [] fNames = {"TestDocumentMimetypeDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass
 	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		// connect the client
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 	
 	@Test
@@ -54,9 +56,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/xml-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -83,10 +82,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "XML";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 
 	@Test	
@@ -96,9 +92,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/xml-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -126,9 +119,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "XML";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testUnmatchedMimetypeOnXML() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -136,10 +126,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		System.out.println("Running testUnmatchedMimetypeOnXML");
 		
 		String filename = "flipper.xml";
-		String uri = "/xml-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
+		String uri = "/xml-mimetype/";		
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -166,10 +153,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "XML";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 	
 	@Test	public void testUnsupportedMimetypeOnXML() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -178,9 +162,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "flipper.xml";
 		String uri = "/xml-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -208,9 +189,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "XML";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testMatchedMimetypeOnJSON() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -220,9 +198,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "json-original.json";
 		String uri = "/json-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -248,10 +223,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "JSON";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 	
 	@Test	public void testUnknownMimetypeOnJSON() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -260,10 +232,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/json-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+	
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -289,10 +258,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "JSON";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 
 	@Test	public void testUnmatchedMimetypeOnJSON() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -301,10 +267,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "json-original.json";
 		String uri = "/json-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
+			
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -330,10 +293,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "JSON";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);	
 	}
 
 	@Test	public void testUnsupportedMimetypeOnJSON() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -343,9 +303,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "json-original.json";
 		String uri = "/json-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -372,9 +329,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "JSON";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 
 	@Test	public void testMatchedMimetypeOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -383,9 +337,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -413,9 +364,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "BINARY";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testUnknownMimetypeOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -424,9 +372,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -453,10 +398,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "BINARY";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 	
 	@Test	public void testUnmatchedMimetypeOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -466,9 +408,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -494,10 +433,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "BINARY";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 
 	@Test	public void testUnsupportedMimetypeOnBinary() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -506,9 +442,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "Pandakarlino.jpg";
 		String uri = "/bin-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -535,10 +468,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "BINARY";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 
 	@Test	public void testMatchedMimetypeOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -548,9 +478,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "text-original.txt";
 		String uri = "/txt-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -576,10 +503,7 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "TEXT";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 	
 	@Test	public void testUnknownMimetypeOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -588,9 +512,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		
 		String filename = "text-original.txt";
 		String uri = "/txt-mimetype/";
-				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
@@ -618,9 +539,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "TEXT";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 	
 	@Test	public void testUnmatchedMimetypeOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -630,9 +548,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "text-original.txt";
 		String uri = "/txt-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -659,9 +574,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String expectedFormat = "TEXT";
     	
     	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
 	}
 
 	@Test	public void testUnsupportedMimetypeOnText() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException
@@ -671,9 +583,6 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
 		String filename = "text-original.txt";
 		String uri = "/txt-mimetype/";
 				
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		
 		// create doc manager
 		DocumentManager docMgr = client.newDocumentManager();
 		
@@ -699,15 +608,14 @@ public class TestDocumentMimetype extends BasicJavaClientREST {
     	String format = handle.getFormat().name();
     	String expectedFormat = "TEXT";
     	
-    	assertEquals("Format does not match", expectedFormat, format);
-		
-	    // release the client
-	    client.release();
+    	assertEquals("Format does not match", expectedFormat, format);		
 	}
 @AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+	    // release the client
+	    client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

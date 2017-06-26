@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 
 public class TestRangeConstraint extends BasicJavaClientREST {
@@ -35,7 +34,7 @@ public class TestRangeConstraint extends BasicJavaClientREST {
 	static String queryOptionName = "rangeConstraintOpt.xml"; 
 	private static String dbName = "RangeConstraintDB";
 	private static String [] fNames = {"RangeConstraintDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static void setUp() throws Exception
@@ -43,16 +42,14 @@ public class TestRangeConstraint extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		addRangeElementIndex(dbName, "decimal", "http://example.com", "rating");
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
 	public void testElementRangeConstraint() throws KeyManagementException, NoSuchAlgorithmException, IOException
 	{
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename:filenames)
-		{
+		for(String filename:filenames) {
 			writeDocumentReaderHandle(client, filename, "/range-constraint/", "XML");
 		}
 
@@ -69,16 +66,14 @@ public class TestRangeConstraint extends BasicJavaClientREST {
 		System.out.println(searchResult);
 
 		assertEquals("Search result difference", expectedSearchResult, searchResult);
-
-		// release client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }

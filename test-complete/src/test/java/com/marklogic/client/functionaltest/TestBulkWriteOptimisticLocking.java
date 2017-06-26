@@ -16,36 +16,9 @@
 
 package com.marklogic.client.functionaltest;
 
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.util.Calendar;
-import java.util.Arrays;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
-import org.w3c.dom.Document;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
-import com.marklogic.client.admin.ServerConfigurationManager;
-import com.marklogic.client.admin.ServerConfigurationManager.UpdatePolicy;
-import com.marklogic.client.document.DocumentDescriptor;
-import com.marklogic.client.document.DocumentPage;
-import com.marklogic.client.document.DocumentRecord;
-import com.marklogic.client.document.DocumentWriteSet;
-import com.marklogic.client.document.GenericDocumentManager;
-import com.marklogic.client.document.TextDocumentManager;
-import com.marklogic.client.document.XMLDocumentManager;
-import com.marklogic.client.io.DOMHandle;
-import com.marklogic.client.io.DocumentMetadataHandle;
-import com.marklogic.client.io.FileHandle;
-import com.marklogic.client.io.DocumentMetadataHandle.Capability;
-import com.marklogic.client.io.StringHandle;
 
 /*
  * This test is designed to to test optimistic locking simple bulk writes with different types of 
@@ -74,7 +47,7 @@ public class TestBulkWriteOptimisticLocking extends BasicJavaClientREST {
 	@Before
 	public void testSetup() throws KeyManagementException, NoSuchAlgorithmException, Exception {
 		// create new connection for each test below
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 
 		// create server configuration manager
 		ServerConfigurationManager configMgr = client.newServerConfigManager();

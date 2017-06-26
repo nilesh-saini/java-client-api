@@ -23,16 +23,13 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentWriteSet;
@@ -48,10 +45,7 @@ public class TestPOJOWithDocsStoredByOthers extends BasicJavaClientREST {
 
 	private static String dbName = "TestPOJOWithDocsStoredByOthersDB";
 	private static String[] fNames = { "TestPOJOWithDocsStoredByOthersDB-1" };
-	
-
-	
-	private DatabaseClient client;
+	private static DatabaseClient client = null;
 
 	/*
 	 * This class is used as a POJO class to read documents stored as a JSON.
@@ -205,23 +199,15 @@ public class TestPOJOWithDocsStoredByOthers extends BasicJavaClientREST {
 	public static void setUpBeforeClass() throws Exception {		
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-	}
-
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
 
 	public DocumentMetadataHandle setMetadata() {
@@ -300,8 +286,7 @@ public class TestPOJOWithDocsStoredByOthers extends BasicJavaClientREST {
 		assertEquals("Country of origin of the object is ", "USA",
 				artifact.getOriginCountry());
 	}
-	
-	
+		
 	/*
 	 * This method is used when there is a need to validate SmallArtifactIdInSuper to test annotation in super class
 	 * and in sub class.
@@ -608,6 +593,5 @@ public class TestPOJOWithDocsStoredByOthers extends BasicJavaClientREST {
 				
 		SmallArtifactIdInSuperAndSub artifact1 = pojoReposSmallArtifact.read(artifactName);
 		validateSubObjReferencedbySuperClassvariableOne(artifact1);			
-	}
-	
+	}	
 }

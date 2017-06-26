@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.TransformExtensionsManager;
 import com.marklogic.client.datamovement.DataMovementManager;
@@ -71,7 +72,6 @@ public class WriteBatcherJobReportTest extends  DmsdkJavaClientREST{
 	private static File fileJson;
 	private static Document docContent;
 
-
 	private static JsonNode jsonNode;
 	
 	private static JobTicket writeTicket;
@@ -90,7 +90,7 @@ public class WriteBatcherJobReportTest extends  DmsdkJavaClientREST{
 			
 		associateRESTServerWithDB(server,dbName);
 		
-		dbClient = DatabaseClientFactory.newClient(host, port, user, password, Authentication.DIGEST);
+		dbClient = DatabaseClientFactory.newClient(host, port, new DigestAuthContext(user, password));
 		dmManager = dbClient.newDataMovementManager();
 		
 		clusterInfo = ((DatabaseClientImpl) dbClient).getServices()
@@ -132,6 +132,7 @@ public class WriteBatcherJobReportTest extends  DmsdkJavaClientREST{
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		dbClient.release();
 		associateRESTServerWithDB(server,"Documents");
 		for (int i =0 ; i < clusterInfo.size(); i++){
 			System.out.println(dbName+"-"+(i+1));

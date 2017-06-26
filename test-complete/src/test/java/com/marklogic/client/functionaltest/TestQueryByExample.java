@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
@@ -52,6 +51,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 public class TestQueryByExample extends BasicJavaClientREST {
 	private static String dbName = "TestQueryByExampleDB";
 	private static String [] fNames = {"TestQueryByExampleDB-1"};
+	private static DatabaseClient client = null;
 	
 	private static int restPort=8011;
 
@@ -61,6 +61,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@After
@@ -77,11 +78,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
 		}
 
@@ -101,10 +99,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		System.out.println("XML Result"+convertXMLDocumentToString(resultDoc));
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);		
 	}
 
 	@Test	
@@ -113,12 +108,9 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		System.out.println("Running testQueryByExampleXML");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
+		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
 		}
 
@@ -129,7 +121,6 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		StringHandle qbeHandle = new StringHandle(qbeQuery);
 		qbeHandle.setFormat(Format.XML);
 
-
 		QueryManager queryMgr = client.newQueryManager();
 
 		RawQueryByExampleDefinition qbyex = queryMgr.newRawQueryByExampleDefinition(qbeHandle);
@@ -139,9 +130,6 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -150,12 +138,9 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		System.out.println("Running testQueryByExampleJSON");
 
 		String[] filenames = {"constraint1.json", "constraint2.json", "constraint3.json", "constraint4.json", "constraint5.json"};
-
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
+        
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "JSON");
 		}
 
@@ -173,12 +158,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		String resultDoc = queryMgr.search(qbyex, new StringHandle()).get();
 
 		System.out.println("testQueryByExampleJSON Result : "+resultDoc);
-
-
-		assertTrue("doc returned is not correct", resultDoc.contains("<search:result index=\"1\" uri=\"/qbe/constraint1.json\" path=\"fn:doc(&quot;/qbe/constraint1.json&quot;)\" score=\"28672\" confidence=\"0.6951694\" fitness=\"0.6951694\" href=\"/v1/documents?uri=%2Fqbe%2Fconstraint1.json\" mimetype=\"application/json\" format=\"json\">"));
-
-		// release client
-		client.release();		
+		assertTrue("doc returned is not correct", resultDoc.contains("<search:result index=\"1\" uri=\"/qbe/constraint1.json\" path=\"fn:doc(&quot;/qbe/constraint1.json&quot;)\" score=\"28672\" confidence=\"0.6951694\" fitness=\"0.6951694\" href=\"/v1/documents?uri=%2Fqbe%2Fconstraint1.json\" mimetype=\"application/json\" format=\"json\">"));		
 	}
 
 	@Test	
@@ -188,11 +168,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.json", "constraint2.json", "constraint3.json", "constraint4.json", "constraint5.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "JSON");
 		}
 
@@ -207,8 +184,6 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		String output = queryMgr.search(querydef, new StringHandle()).get();
 		System.out.println(output);
 		assertTrue(output.contains("(cts:search(fn:collection(), cts:or-query((cts:and-query((cts:field-word-query"));
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -218,11 +193,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
 		}
 
@@ -234,14 +206,10 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		RawQueryByExampleDefinition rw = queryMgr.newRawQueryByExampleDefinition(fileHandle.withFormat(Format.XML));
 		SearchHandle results = queryMgr.search(rw, new SearchHandle());
 
-		for (MatchDocumentSummary result : results.getMatchResults()) 
-		{
+		for (MatchDocumentSummary result : results.getMatchResults()) {
 			System.out.println(result.getUri()+ ": Uri");
 			assertEquals("Wrong Document Searched",result.getUri() , "/qbe/constraint1.xml");
 		} 
-
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -251,11 +219,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.json", "constraint2.json", "constraint3.json", "constraint4.json", "constraint5.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames){
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "JSON");
 		}
 
@@ -267,11 +232,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		RawQueryByExampleDefinition qbyex = queryMgr.newRawQueryByExampleDefinition(fileHandle.withFormat(Format.JSON));
 		String resultDoc = queryMgr.search(qbyex, new StringHandle()).get();
 		System.out.println(resultDoc);
-		assertTrue("Result is not proper", resultDoc.contains("/qbe/constraint1.json"));
-
-
-		// release client
-		client.release();		
+		assertTrue("Result is not proper", resultDoc.contains("/qbe/constraint1.json"));	
 	}
 
 	@Test	
@@ -281,16 +242,13 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
 		}
 
 		// get the combined query
-		try{
+		try {
 			File file = new File("src/test/java/com/marklogic/client/functionaltest/qbe/qbe2.xml");
 
 			FileHandle fileHandle = new FileHandle(file);
@@ -307,9 +265,6 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		}catch(ClientHandlerException e){
 			System.out.println("Negative Test Passed of executing nonreadable file");			
 		}
-		// release client
-		client.release();		
-
 	}
 
 	@Test	
@@ -319,11 +274,9 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String filename = "WrongFormat.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		try{
+		try {
 			// write docs
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
-
 
 			// get the combined query
 			File file = new File("src/test/java/com/marklogic/client/functionaltest/qbe/qbe1.xml");
@@ -333,18 +286,14 @@ public class TestQueryByExample extends BasicJavaClientREST {
 			RawQueryByExampleDefinition rw = queryMgr.newRawQueryByExampleDefinition(fileHandle.withFormat(Format.XML));
 			SearchHandle results = queryMgr.search(rw, new SearchHandle());
 
-			for (MatchDocumentSummary result : results.getMatchResults()) 
-			{
+			for (MatchDocumentSummary result : results.getMatchResults()) {
 				System.out.println(result.getUri()+ ": Uri");
 				//	assertEquals("Wrong Document Searched",result.getUri() , "/qbe/constraint1.xml");
 			} 
 		}
 		catch(FailedRequestException e){
 			System.out.println("Negative test passed as XML with invalid structure gave FailedRequestException ");
-		}
-
-		// release client
-		client.release();		
+		}	
 	}
 
 	@Test	
@@ -353,9 +302,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		System.out.println("Running testQueryByExampleJSON");
 
 		String filename = "WrongFormat.json";
-
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-		try{	
+		try {	
 			// write docs
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "JSON");
 
@@ -379,10 +326,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		}
 		catch(FailedRequestException e){
 			System.out.println("Negative test passed as JSON with invalid structure gave FailedRequestException ");
-		}
-		
-		// release client
-		client.release();		
+		}	
 	}
 
 	@Test	
@@ -392,11 +336,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "XML");
 		}
 
@@ -408,8 +349,7 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		RawQueryByExampleDefinition rw = queryMgr.newRawQueryByExampleDefinition(fileHandle.withFormat(Format.XML));
 		SearchHandle results = queryMgr.search(rw, new SearchHandle());
 
-		for (MatchDocumentSummary result : results.getMatchResults()) 
-		{
+		for (MatchDocumentSummary result : results.getMatchResults()) {
 			System.out.println(result.getUri()+ ": Uri");
 			assertEquals("Wrong Document Searched",result.getUri() , "/qbe/constraint1.xml");
 		} 
@@ -421,18 +361,14 @@ public class TestQueryByExample extends BasicJavaClientREST {
 			RawQueryByExampleDefinition newRw = newQueryMgr.newRawQueryByExampleDefinition(wrongFileHandle.withFormat(Format.XML));
 			SearchHandle newResults = queryMgr.search(newRw, new SearchHandle());
 
-			for (MatchDocumentSummary result : newResults.getMatchResults()) 
-			{
+			for (MatchDocumentSummary result : newResults.getMatchResults()) {
 				System.out.println(result.getUri()+ ": Uri");
 				assertEquals("Wrong Document Searched",result.getUri() , "/qbe/constraint1.xml");
 			} 
 		}
 		catch(FailedRequestException e){
 			System.out.println("Negative test passed as Query with improper Xml format gave FailedRequestException ");	
-		}
-		
-		// release client
-		client.release();		
+		}	
 	}
 
 	@Test	
@@ -442,11 +378,8 @@ public class TestQueryByExample extends BasicJavaClientREST {
 
 		String[] filenames = {"constraint1.json", "constraint2.json", "constraint3.json", "constraint4.json", "constraint5.json"};
 
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/qbe/", "JSON");
 		}
 
@@ -464,9 +397,6 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		String resultDoc = queryMgr.search(qbyex, new StringHandle()).get();
 
 		System.out.println("Result of Correct Query"+ resultDoc);
-
-		//assertTrue("total result is not correct", resultDoc.contains("\"total\":1"));
-		//  assertTrue("doc returned is not correct", resultDoc.contains("\"metadata\":[{\"title\":\"Vannevar Bush\"},{\"id\":11},{\"p\":\"Vannevar Bush wrote an article for The Atlantic Monthly\"},{\"popularity\":5}]"));
 
 		// get the query with Wrong Format
 
@@ -490,14 +420,13 @@ public class TestQueryByExample extends BasicJavaClientREST {
 		catch(FailedRequestException e){
 			System.out.println("Negative test passed as Query with improper JSON format gave FailedRequestException ");
 		}
-		
-		// release client
-		client.release();		
 	}
 	
 	@AfterClass	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

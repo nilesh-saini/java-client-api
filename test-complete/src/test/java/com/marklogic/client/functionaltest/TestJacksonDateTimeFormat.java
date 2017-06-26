@@ -26,9 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -36,7 +34,6 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentWriteSet;
@@ -54,11 +51,8 @@ import com.marklogic.client.pojo.annotation.Id;
 public class TestJacksonDateTimeFormat extends BasicJavaClientREST {
 	private static String dbName = "TestJacksonDateTimeFormatDB";
 	private static String [] fNames = {"TestJacksonDateTimeFormatDB-1"};
-	
-		
+	private static DatabaseClient client = null;
 	private long artifactId = 1L;
-	
-	private  DatabaseClient client;
 	
 	 /*
 	  * This class is used to test writing and reading date-time
@@ -166,23 +160,17 @@ public class TestJacksonDateTimeFormat extends BasicJavaClientREST {
 	public static void setUpBeforeClass() throws Exception {		
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
-		cleanupRESTServer(dbName, fNames);
-	}
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-	}
-	@After
-	public void tearDown() throws Exception {
+		System.out.println("In tear down");
 		// release client
 		client.release();
+		cleanupRESTServer(dbName, fNames);
 	}
-
+	
 	// Increment and return the current Id.
 	public  long getOneLongId() {
 		long lTemp = getArtifactId();
@@ -258,8 +246,7 @@ public class TestJacksonDateTimeFormat extends BasicJavaClientREST {
 		assertEquals(-87.966, artifact.getManufacturer().getLongitude(), 0.00);
 		assertEquals(41.998, artifact.getManufacturer().getLatitude(), 0.00);
 	}
-	
-	
+		
 	/*
 	 * This method is used when there is a need to validate one read and search with 
 	 * date-time in SpArtifactDateTimeObjMapper class
@@ -296,7 +283,6 @@ public class TestJacksonDateTimeFormat extends BasicJavaClientREST {
 		String docId[] = { "/datetime.json" };
 		String jsonDate = new String("{\"expiryDate\": {\"java.util.GregorianCalendar\": \"2014-11-06,13:00\"}}");
 		
-
 		JSONDocumentManager docMgr = client.newJSONDocumentManager();
 		docMgr.setMetadataCategories(Metadata.ALL);
 		
@@ -366,7 +352,6 @@ public class TestJacksonDateTimeFormat extends BasicJavaClientREST {
 			artifact = pojoReposProducts.read(calTime);
 			assertFalse("Test Expecting exception",true);
 		} catch (ResourceNotFoundException e) {
-			// TODO Auto-generated catch block
 			assertTrue("expected exception",true);
 		}catch (Exception e){
 			assertFalse("Test got unexpected",true);

@@ -35,16 +35,15 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesGeoAttrPairConstraint extends BasicJavaClientREST {
 
-//	private String serverName = "";
 	private static String dbName = "AppServicesGeoAttrPairConstraintDB";
 	private static String [] fNames = {"AppServicesGeoAttrPairConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -52,6 +51,7 @@ public class TestAppServicesGeoAttrPairConstraint extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesGeoConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");	
 	}
 @After
 public  void testCleanUp() throws Exception
@@ -65,9 +65,7 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testPointPositiveLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
 		loadGeoData();
 		
@@ -88,9 +86,6 @@ public  void testCleanUp() throws Exception
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("karl_kara 12,5 12,5 12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
 
 @Test
@@ -99,9 +94,7 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testPointNegativeLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
 		loadGeoData();
 		
@@ -121,10 +114,7 @@ public  void testCleanUp() throws Exception
 		Document resultDoc = resultsHandle.get();
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("karl_kara 12,-5 12,-5 12 -5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("karl_kara 12,-5 12,-5 12 -5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);		
 	}
 
 @Test
@@ -133,8 +123,6 @@ public  void testCleanUp() throws Exception
 		System.out.println("Running testNegativePointInvalidValue");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// write docs
 		loadGeoData();
@@ -162,9 +150,6 @@ public  void testCleanUp() throws Exception
 		} catch (Exception e) { e.toString(); }
 		
 		assertTrue("Expected Warning message is not thrown", result.contains("<search:warning id=\"SEARCH-IGNOREDQTEXT\">[Invalid text, cannot parse geospatial point from '12,A'.]</search:warning>"));
-						
-		// release client
-		client.release();		
 	}
 
 @Test
@@ -174,8 +159,6 @@ public  void testCleanUp() throws Exception
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
 		loadGeoData();
 		
@@ -200,11 +183,7 @@ public  void testCleanUp() throws Exception
 		assertXpathEvaluatesTo("karl_jill 12,-4 12,-4 12 -4", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("bill_kara 13,-5 13,-5 13 -5", "string(//*[local-name()='result'][4]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("karl_gale 12,-6 12,-6 12 -6", "string(//*[local-name()='result'][5]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
-
 
 @Test
 	public void testBoxPositiveLatNegativeLang() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, XpathException, TransformerException
@@ -213,8 +192,6 @@ public  void testCleanUp() throws Exception
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
 		loadGeoData();
 		
@@ -236,10 +213,7 @@ public  void testCleanUp() throws Exception
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("karl_kara 12,-5 12,-5 12 -5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("jack_kara 11,-5 11,-5 11 -5", "string(//*[local-name()='result'][2]//*[local-name()='match'])", resultDoc);
-		assertXpathEvaluatesTo("karl_jill 12,-4 12,-4 12 -4", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("karl_jill 12,-4 12,-4 12 -4", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);		
 	}
 
 @Test
@@ -249,8 +223,6 @@ public  void testCleanUp() throws Exception
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
 		loadGeoData();
 		
@@ -270,15 +242,15 @@ public  void testCleanUp() throws Exception
 		Document resultDoc = resultsHandle.get();
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/geo-constraint/geo-constraint15.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/geo-constraint/geo-constraint15.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);	
 	}
+
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

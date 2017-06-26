@@ -35,17 +35,17 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.XMLStreamReaderHandle;
 public class TestXMLStreamReaderHandle extends BasicJavaClientREST {
 	private static String dbName = "XMLStreamReaderHandleDB";
 	private static String [] fNames = {"XMLStreamReaderHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	public static void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -55,9 +55,6 @@ public class TestXMLStreamReaderHandle extends BasicJavaClientREST {
 		String uri = "/write-xml-XMLStreamReaderHandle/";
 
 		System.out.println("Running testXmlCRUD");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write the doc
 		writeDocumentReaderHandle(client, filename, uri, "XML");
@@ -79,8 +76,7 @@ public class TestXMLStreamReaderHandle extends BasicJavaClientREST {
 		deleteDocument(client, uri + filename, "XML");
 
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentReaderHandle(client, uri + filename, "XML");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -88,15 +84,14 @@ public class TestXMLStreamReaderHandle extends BasicJavaClientREST {
 		String expectedException = "Could not read non-existent document";
 		boolean documentIsDeleted = exception.contains(expectedException);
 		assertTrue("Document is not deleted", documentIsDeleted);
-
-		// release the client
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release the client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

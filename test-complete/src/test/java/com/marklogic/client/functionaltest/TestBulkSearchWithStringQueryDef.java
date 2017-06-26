@@ -25,13 +25,12 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -40,7 +39,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentManager.Metadata;
 import com.marklogic.client.document.DocumentPage;
@@ -61,7 +59,6 @@ import com.marklogic.client.query.MatchLocation;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.QueryManager.QueryView;
 import com.marklogic.client.query.StringQueryDefinition;
-import java.util.Map;
 
 public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 	private static final int BATCH_SIZE=100;
@@ -69,8 +66,7 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 	private static String dbName = "TestBulkSearchSQDDB";
 	private static String [] fNames = {"TestBulkSearchSQDDB-1"};
 	
-	
-	private  DatabaseClient client ;
+	private static DatabaseClient client = null;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -78,27 +74,18 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
 		createRESTUserWithPermissions("usr1", "password",getPermissionNode("flexrep-eval",Capability.READ),getCollectionNode("http://permission-collections/"), "rest-writer","rest-reader" );
+		client = getDatabaseClientWithDigest("usr1", "password");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		System.out.println("In tear down" );
+		System.out.println("In tear down");
 		cleanupRESTServer(dbName, fNames);
+		// release client
+		client.release();		
 		deleteRESTUser("usr1");
 	}
 
-	@Before
-	public void setUp() throws KeyManagementException, NoSuchAlgorithmException, Exception {
-		// create new connection for each test below
-		client = getDatabaseClient("usr1", "password", Authentication.DIGEST);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Running clear script");	
-		// release client
-		client.release();
-	}
 	public void loadJSONDocuments() throws KeyManagementException, NoSuchAlgorithmException, JsonProcessingException, IOException{
 		int count=1;	 
 		JSONDocumentManager docMgr = client.newJSONDocumentManager();
@@ -106,57 +93,56 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 
 		Map<String,String> map= new HashMap<>();
 
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 			JsonNode jn = new ObjectMapper().readTree("{\"animal\":\"dog"+i+"\", \"says\":\"woof\"}");
 			JacksonHandle jh = new JacksonHandle();
 			jh.set(jn);
 			writeset.add(DIRECTORY+"dog"+i+".json",jh);
 			map.put(DIRECTORY+"dog"+i+".json", jn.toString());
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
-			count++;
-			//	      System.out.println(jn.toString());
+			count++;			
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 	}
+	
 	public void validateRecord(DocumentRecord record,Format type) {
-
 		assertNotNull("DocumentRecord should never be null", record);
 		assertNotNull("Document uri should never be null", record.getUri());
 		assertTrue("Document uri should start with " + DIRECTORY, record.getUri().startsWith(DIRECTORY));
 		assertEquals("All records are expected to be in same format", type, record.getFormat());
-		//        System.out.println(record.getMimetype());
-
 	}
-	public void loadTxtDocuments(){
+	
+	public void loadTxtDocuments() {
 		int count =1;
 		TextDocumentManager docMgr = client.newTextDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<101;i++){
+		for(int i =0;i<101;i++) {
 			writeset.add(DIRECTORY+"Textfoo"+i+".txt", new StringHandle().with("bar can be foo"+i));
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
 			count++;
 		}
-		if(count%BATCH_SIZE > 0){
+		if(count%BATCH_SIZE > 0) {
 			docMgr.write(writeset);
 		}
 	}
+	
 	public void loadXMLDocuments() throws KeyManagementException, NoSuchAlgorithmException, IOException, ParserConfigurationException, SAXException, TransformerException{
 		int count=1;
 		XMLDocumentManager docMgr = client.newXMLDocumentManager();
 		DocumentWriteSet writeset =docMgr.newWriteSet();
-		for(int i =0;i<102;i++){
+		for(int i =0;i<102;i++) {
 
 			writeset.add(DIRECTORY+"foo"+i+".xml", new DOMHandle(getDocumentContent("This is so foo with a bar "+i)));
 
-			if(count%BATCH_SIZE == 0){
+			if(count%BATCH_SIZE == 0) {
 				docMgr.write(writeset);
 				writeset = docMgr.newWriteSet();
 			}
@@ -166,6 +152,7 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 			docMgr.write(writeset);
 		}
 	}
+	
 	@Test
 	public void testBulkSearchSQDwithDifferentPageSizes() {
 		int count;
@@ -203,18 +190,17 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		assertFalse("Is first page has previous page ?",page.hasPreviousPage());
 		//		
 		long pageNo=1;
-		do{
+		do {
 			count=0;
 			page = docMgr.search(qd, pageNo,sh);
-			if(pageNo >1){ 
+			if(pageNo >1) { 
 				assertFalse("Is this first Page", page.isFirstPage());
 				assertTrue("Is page has previous page ?",page.hasPreviousPage());
 			}
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 				rec.getFormat();
-				validateRecord(rec,Format.TEXT);
-				//		System.out.println(rec.getUri());
+				validateRecord(rec,Format.TEXT);				
 				count++;
 			}
 			MatchDocumentSummary[] mds= sh.getMatchResults();
@@ -222,17 +208,17 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 			//since we set the query view to get only results, facet count supposed be 0
 			assertEquals("Matched Facet count",0,sh.getFacetNames().length);
 
-			assertEquals("document count", page.size(),count);
-			//			assertEquals("Page Number #",pageNo,page.getPageNumber());
+			assertEquals("document count", page.size(),count);			
 			pageNo = pageNo + page.getPageSize();
-		}while(!page.isLastPage());
-//		assertTrue("page count is 101 ",pageNo == page.getTotalPages());
+		} while(!page.isLastPage());
+
 		assertTrue("Page has previous page ?",page.hasPreviousPage());
 		assertEquals("page size", 1,page.getPageSize());
 		assertEquals("document count", 101,page.getTotalSize());
 		page= docMgr.search(qd, 102);
 		assertFalse("Page has any records ?",page.hasContent());
 	}
+	
 	//This test is trying to set the setResponse to JSON on DocumentManager and use search handle which only work with XML
 	@Test(expected = UnsupportedOperationException.class)
 	public void testBulkSearchSQDwithWrongResponseFormat() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -254,6 +240,7 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		}
 
 	}
+	
 	//Testing issue 192
 	@Test
 	public void testBulkSearchSQDwithNoResults() throws KeyManagementException, NoSuchAlgorithmException, Exception {
@@ -265,9 +252,8 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		SearchHandle results = new SearchHandle();
 		DocumentPage page= docMgr.search(qd, 1,results);
 		assertFalse("Should return no results",page.hasNext());
-
-
 	}
+	
 	//This test has set response to JSON and pass StringHandle with format as JSON, expectint it to work, logged an issue 82
 	@Test
 	public void testBulkSearchSQDwithResponseFormatandStringHandle() throws KeyManagementException, NoSuchAlgorithmException, Exception{
@@ -280,7 +266,6 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		StringQueryDefinition qd = queryMgr.newStringDefinition();
 		qd.setCriteria("bar");
 
-
 		docMgr.setNonDocumentFormat(Format.JSON);
 		docMgr.setSearchView(QueryView.METADATA);
 		docMgr.setMetadataCategories(Metadata.PERMISSIONS);
@@ -288,7 +273,7 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		StringHandle results = new StringHandle().withFormat(Format.JSON);
 		DocumentPage page= docMgr.search(qd, 1,results);
 		DocumentMetadataHandle mh = new DocumentMetadataHandle();
-		while(page.hasNext()){
+		while(page.hasNext()) {
 			DocumentRecord rec = page.next();
 			validateRecord(rec,Format.TEXT);
 			docMgr.readMetadata(rec.getUri(),mh);
@@ -297,9 +282,8 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 			count++;
 		}
 		assertFalse("Search handle contains",results.get().isEmpty());
-
-
 	}
+	
 	//This test is testing SearchView options and search handle
 	@Test
 	public void testBulkSearchSQDwithJSONResponseFormat() throws KeyManagementException, NoSuchAlgorithmException, Exception{
@@ -317,7 +301,6 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		JacksonHandle jh = new JacksonHandle();
 		DocumentPage page= docMgr.search(qd, 1,jh);
 
-		//		System.out.println(jh.get().toString());
 		assertTrue("Searh response has entry for facets",jh.get().has("facets"));
 		assertFalse("Searh response has entry for results",jh.get().has("results"));//Issue 84 is tracking this
 		assertFalse("Searh response has entry for metrics",jh.get().has("metrics"));
@@ -346,7 +329,6 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		queryMgr.setView(QueryView.FACETS);
 		queryMgr.search(qd, jh);
 		System.out.println(jh.get().toString());
-
 	}
 
 	//This test is to verify the transactions, verifies the search works with transaction before commit, after rollback and after commit
@@ -358,46 +340,41 @@ public class TestBulkSearchWithStringQueryDef extends BasicJavaClientREST{
 		StringQueryDefinition qd = queryMgr.newStringDefinition();
 		qd.setCriteria("thought");
 		Transaction t= client.openTransaction();
-		try{
+		try {
 			loadTxtDocuments();
 			int count=1;
 			XMLDocumentManager xmldocMgr = client.newXMLDocumentManager();
 			DocumentWriteSet writeset =xmldocMgr.newWriteSet();
-			for(int i =0;i<102;i++){
+			for(int i =0;i<102;i++) {
 				writeset.add(DIRECTORY+"boo"+i+".xml", new DOMHandle(getDocumentContent("This is so too much thought "+i)));
-				if(count%BATCH_SIZE == 0){
+				if(count%BATCH_SIZE == 0) {
 					xmldocMgr.write(writeset,t);
 					writeset = xmldocMgr.newWriteSet();
 				}
 				count++;
 			}
-			if(count%BATCH_SIZE > 0){
+			if(count%BATCH_SIZE > 0) {
 				xmldocMgr.write(writeset,t);
 			}
 			count=0;
 			docMgr.setSearchView(QueryView.RESULTS);		
 
 			DocumentPage page= docMgr.search(qd, 1,results,t);
-			while(page.hasNext()){
+			while(page.hasNext()) {
 				DocumentRecord rec = page.next();
 
 				validateRecord(rec,Format.XML);
 				count++;
 			}
 			assertTrue("Page has conttent :",page.hasContent());
-			assertEquals("Total search results before transaction rollback are ","102",results.get().getElementsByTagNameNS("*", "response").item(0).getAttributes().getNamedItem("total").getNodeValue());
-			//			System.out.println(results.get().getElementsByTagNameNS("*", "response").item(0).getAttributes().getNamedItem("total").getNodeValue());
+			assertEquals("Total search results before transaction rollback are ","102",results.get().getElementsByTagNameNS("*", "response").item(0).getAttributes().getNamedItem("total").getNodeValue());			
 
-		}catch(Exception e){ throw e;}
+		} catch(Exception e){ throw e;}
 		finally{t.rollback();}
 
 		DocumentPage page= docMgr.search(qd, 1,results);
 		System.out.println(this.convertXMLDocumentToString(results.get()));
 
 		assertEquals("Total search results after rollback are ",results.get().getElementsByTagNameNS("*", "response").item(0).getAttributes().getNamedItem("total").getNodeValue(),"0");
-
-	}
-	
-	
-	
+	}	
 }

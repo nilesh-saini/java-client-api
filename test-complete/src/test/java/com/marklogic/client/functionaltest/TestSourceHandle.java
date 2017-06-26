@@ -34,20 +34,20 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SourceHandle;
 
 public class TestSourceHandle extends BasicJavaClientREST {
 
 	private static String dbName = "SourceHandleDB";
 	private static String [] fNames = {"SourceHandleDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	
 	public static  void setUp() throws Exception
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-writer", "x");
 	}
 
 	@Test	
@@ -57,9 +57,6 @@ public class TestSourceHandle extends BasicJavaClientREST {
 		String uri = "/write-xml-sourcehandle/";
 
 		System.out.println("Running testXmlCRUD");
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-writer", "x", Authentication.DIGEST);
 
 		// write docs
 		writeDocumentUsingInputStreamHandle(client, filename, uri, "XML");
@@ -106,8 +103,7 @@ public class TestSourceHandle extends BasicJavaClientREST {
 
 		// read the deleted document
 		String exception = "";
-		try
-		{
+		try {
 			readDocumentUsingInputStreamHandle(client, uri + filename, "XML");
 		} 
 		catch (Exception e) { exception = e.toString(); }
@@ -116,16 +112,17 @@ public class TestSourceHandle extends BasicJavaClientREST {
 		boolean documentIsDeleted = exception.contains(expectedException);
 		assertTrue("Document is not deleted", documentIsDeleted);
 
-		// release client
+		// release
 		contentHandle.close();
 		updateHandle.close();
-		client.release();
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

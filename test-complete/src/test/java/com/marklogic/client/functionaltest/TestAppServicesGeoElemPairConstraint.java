@@ -35,27 +35,26 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
 
 public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 
-//	private static String serverName = "";
 	private static String dbName = "AppServicesGeoElemPairConstraintDB";
 	private static String [] fNames = {"AppServicesGeoElemPairConstraintDB-1"};
+	private static DatabaseClient client = null;
 	
-
 	@BeforeClass
 	public static void setUp() throws Exception 
 	{
 	  System.out.println("In setup");
-//	  super.setUp();
-//	  serverName = getConnectedServerName();
+
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesGeoConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
+	
 	@After
 	public  void testCleanUp() throws Exception
 	{
@@ -69,9 +68,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		System.out.println("Running testPointPositiveLangLat");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
+		
 		// write docs
 		loadGeoData();
 		
@@ -91,10 +88,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("karl_kara 12,5 12,5 12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("karl_kara 12,5 12,5 12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);		
 	}
 
 	@Test
@@ -103,8 +97,6 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		System.out.println("Running testPointNegativeLatPositiveLang");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 				
 		// write docs
 		loadGeoData();
@@ -126,9 +118,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("karl_kara -12,5 -12,5 -12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+				
 	}
 
 	@Test
@@ -137,8 +127,6 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		System.out.println("Running testNegativePointInvalidValue");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 		
 		// write docs
 		loadGeoData();
@@ -162,11 +150,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 			System.out.println("Result : "+result);
 		} catch (Exception e) { e.toString(); }
 		
-		assertTrue("Expected Warning message is not thrown", result.contains("<search:warning id=\"SEARCH-IGNOREDQTEXT\">[Invalid text, cannot parse geospatial point from '-12,A'.]</search:warning>"));
-		
-				
-		// release client
-		client.release();		
+		assertTrue("Expected Warning message is not thrown", result.contains("<search:warning id=\"SEARCH-IGNOREDQTEXT\">[Invalid text, cannot parse geospatial point from '-12,A'.]</search:warning>"));		
 	}
 
 	@Test
@@ -176,8 +160,6 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
 		loadGeoData();
 		
@@ -201,10 +183,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("karl_gale -12,6 -12,6 -12 6", "string(//*[local-name()='result'][2]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("karl_kara -12,5 -12,5 -12 5", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("jack_kara -11,5 -11,5 -11 5", "string(//*[local-name()='result'][4]//*[local-name()='match'])", resultDoc);
-		assertXpathEvaluatesTo("karl_jill -12,4 -12,4 -12 4", "string(//*[local-name()='result'][5]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("karl_jill -12,4 -12,4 -12 4", "string(//*[local-name()='result'][5]//*[local-name()='match'])", resultDoc);		
 	}
 
 	@Test
@@ -214,8 +193,6 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		
 		String queryOptionName = "geoConstraintOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-				
 		// write docs
 		loadGeoData();
 		
@@ -237,10 +214,7 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("3", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("karl_kara -12,5 -12,5 -12 5", "string(//*[local-name()='result'][1]//*[local-name()='match'])", resultDoc);
 		assertXpathEvaluatesTo("jack_kara -11,5 -11,5 -11 5", "string(//*[local-name()='result'][2]//*[local-name()='match'])", resultDoc);
-		assertXpathEvaluatesTo("karl_jill -12,4 -12,4 -12 4", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("karl_jill -12,4 -12,4 -12 4", "string(//*[local-name()='result'][3]//*[local-name()='match'])", resultDoc);	
 	}
 
 	@Test
@@ -249,8 +223,6 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		System.out.println("Running testBoxAndWord");
 		
 		String queryOptionName = "geoConstraintOpt.xml";
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 				
 		// write docs
 		loadGeoData();
@@ -272,14 +244,14 @@ public class TestAppServicesGeoElemPairConstraint extends BasicJavaClientREST {
 		
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/geo-constraint/geo-constraint20.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-		
-		// release client
-		client.release();		
 	}
+	
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

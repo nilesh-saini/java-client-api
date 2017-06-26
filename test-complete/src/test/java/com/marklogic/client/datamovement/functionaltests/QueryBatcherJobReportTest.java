@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.ExtensionMetadata;
 import com.marklogic.client.admin.TransformExtensionsManager;
 import com.marklogic.client.datamovement.ApplyTransformListener;
@@ -67,14 +68,12 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 	private static String server = "App-Services";
 	private static JsonNode clusterInfo;
 
-
 	private static StringHandle stringHandle;
 	private static FileHandle fileHandle;
 
 	private static DocumentMetadataHandle meta1;
 	private static DocumentMetadataHandle meta2;
 	
-
 	private static String stringTriple;
 	private static File fileJson;
 
@@ -89,7 +88,7 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
-		dbClient = DatabaseClientFactory.newClient(host, port, user, password, Authentication.DIGEST);
+		dbClient = DatabaseClientFactory.newClient(host, port, new DigestAuthContext(user, password));
 		dmManager = dbClient.newDataMovementManager();
 		hostNames = getHosts();	    
 		createDB(dbName);
@@ -103,13 +102,9 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 
 		associateRESTServerWithDB(server,dbName);
 
-				
-	
-
 		clusterInfo = ((DatabaseClientImpl) dbClient).getServices()
 				.getResource(null, "internal/forestinfo", null, null, new JacksonHandle())
 				.get();
-
 
 		// FileHandle
 		fileJson = FileUtils.toFile(WriteHostBatcherTest.class.getResource(TEST_DIR_PREFIX+"dir.json"));
@@ -122,15 +117,11 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 		stringHandle = new StringHandle(stringTriple);
 		stringHandle.setFormat(Format.XML);
 		meta2 = new DocumentMetadataHandle().withCollections("XmlTransform");		
-
-	
 		
 		WriteBatcher ihb2 =  dmManager.newWriteBatcher();
 		ihb2.withBatchSize(27).withThreadCount(10);
 		ihb2.onBatchSuccess(
 				batch -> {
-
-
 				}
 				)
 		.onBatchFailure(
@@ -171,13 +162,12 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 		//JS Transformation
 		File transformFile1 = FileUtils.toFile(WriteHostBatcherTest.class.getResource(TEST_DIR_PREFIX+"javascript_transform.sjs"));
 		FileHandle transformHandle1 = new FileHandle(transformFile1);
-		transMgr.writeJavascriptTransform("jsTransform", transformHandle1);
-
-		
+		transMgr.writeJavascriptTransform("jsTransform", transformHandle1);		
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		dbClient.release();
 		clearDB(port);
 		associateRESTServerWithDB(server,"Documents");
 		for (int i =0 ; i < clusterInfo.size(); i++){
@@ -187,8 +177,6 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 
 		deleteDB(dbName);
 	}
-
-
 
 	@Before
 	public void setUp() throws Exception {
@@ -201,10 +189,8 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 	}
 
 	@Test
-	public void jobReport() throws Exception{
-
-		
-				
+	public void jobReport() throws Exception {
+			
 		AtomicInteger batchCount = new AtomicInteger(0);
 		AtomicInteger successCount = new AtomicInteger(0);
 		AtomicLong count1 = new AtomicLong(0);
@@ -239,7 +225,6 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 			if(Math.abs(dmManager.getJobReport(queryTicket).getReportTimestamp().getTime().getTime()-Calendar.getInstance().getTime().getTime()) < 10000){
 				count3.incrementAndGet();
 			}
-			
 		
 		});
 		batcher.onQueryFailure(throwable -> throwable.printStackTrace());
@@ -254,10 +239,7 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 		Assert.assertEquals(dmManager.getJobReport(queryTicket).getSuccessBatchesCount() , count1.get());
 		Assert.assertEquals(dmManager.getJobReport(queryTicket).getSuccessBatchesCount() , count2.get());
 		Assert.assertEquals(dmManager.getJobReport(queryTicket).getSuccessBatchesCount() , count3.get());
-	
-		
 	}
-
 
 	@Test
 	public void testNullQdef() throws IOException, InterruptedException
@@ -372,8 +354,7 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
    				changeProperty(properties,"/manage/v2/databases/"+dbName+"/properties");
      			System.out.println("DB disabled");
      			state=false;
-   			 }
-   				
+   			 }   				
    		  }
    		try {
 			Thread.currentThread().sleep(5000L);
@@ -423,8 +404,7 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 		Assert.assertTrue(dmManager.getJobReport(queryTicket).getFailureEventsCount() == 0);
 		Assert.assertTrue(dmManager.getJobReport(queryTicket).getFailureBatchesCount() == 0);
 				
-		Assert.assertTrue(batchCount.get() == dmManager.getJobReport(queryTicket).getSuccessBatchesCount());
-				
+		Assert.assertTrue(batchCount.get() == dmManager.getJobReport(queryTicket).getSuccessBatchesCount());				
 	}
 
 	@Test
@@ -454,12 +434,10 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 				}
 	
 	   	}).onUrisReady(listener).onQueryFailure((throwable)-> throwable.printStackTrace());
-		
 
 		queryTicket = dmManager.startJob( batcher );
 		batcher.awaitCompletion(Long.MAX_VALUE, TimeUnit.DAYS);
 		dmManager.stopJob(queryTicket);
-
 
 		String uris[] = new String[2000];
 		for(int i =0;i<2000;i++){
@@ -479,10 +457,8 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 		Assert.assertTrue(success.get());
 		Assert.assertEquals(batchCount.get(), dmManager.getJobReport(queryTicket).getSuccessBatchesCount());
 		Assert.assertEquals(batchCount.get(), count.get());
-		Assert.assertEquals(2000, dmManager.getJobReport(queryTicket).getSuccessEventsCount());
-		
+		Assert.assertEquals(2000, dmManager.getJobReport(queryTicket).getSuccessEventsCount());		
 	}
-
 	
 	//ISSUE # 106
 	@Test
@@ -516,15 +492,13 @@ public class QueryBatcherJobReportTest extends  DmsdkJavaClientREST {
 					System.out.println("stopTransformJobTest: Failed: "+batch.getItems()[0]);
 
 				});
-		
-		
+				
 		QueryBatcher batcher = dmManager.newQueryBatcher(new StructuredQueryBuilder().collection("XmlTransform"))
 				.withBatchSize(1)
 				.withThreadCount(1);
 		
 		AtomicLong successCount = new AtomicLong(0L);
 		
-
 		batcher = batcher.onUrisReady((batch)->{
 				successCount.set(dmManager.getJobReport(queryTicket).getSuccessEventsCount());
 	     	

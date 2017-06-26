@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.Format;
@@ -45,12 +44,14 @@ public class TestQueryOptionBuilderSearchOptions extends BasicJavaClientREST {
 
 	private static String dbName = "TestQueryOptionBuilderSearchOptionsDB";
 	private static String [] fNames = {"TestQueryOptionBuilderSearchOptionsDB-1"};
+	private static DatabaseClient client = null;
 	
 	@BeforeClass	
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
@@ -59,8 +60,6 @@ public class TestQueryOptionBuilderSearchOptions extends BasicJavaClientREST {
 		System.out.println("Running testSearchOptions1");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -116,10 +115,7 @@ public class TestQueryOptionBuilderSearchOptions extends BasicJavaClientREST {
 
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:word-query(\"bush\", (\"lang=en\"), 1), (\"checked\",\"filtered\",\"score-simple\",cts:score-order(\"descending\")), 1))[1 to 10]";
 
-		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-
-		// release client
-		client.release();	
+		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);	
 	}
 
 	@Test	
@@ -128,8 +124,6 @@ public class TestQueryOptionBuilderSearchOptions extends BasicJavaClientREST {
 		System.out.println("Running testSearchOptions2");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -186,14 +180,13 @@ public class TestQueryOptionBuilderSearchOptions extends BasicJavaClientREST {
 		String expectedSearchReport = "(cts:search(fn:collection(), cts:word-query(\"bush\", (\"lang=en\"), 1), (\"unchecked\",\"unfiltered\",\"score-logtfidf\",cts:score-order(\"descending\")), 1))[1 to 10]";
 
 		assertXpathEvaluatesTo(expectedSearchReport, "string(//*[local-name()='report'])", resultDoc);
-
-		// release client
-		client.release();	
 	} 
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

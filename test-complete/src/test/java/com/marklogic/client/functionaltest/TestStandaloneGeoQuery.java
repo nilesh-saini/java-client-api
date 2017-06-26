@@ -34,7 +34,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
@@ -45,13 +44,14 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 	private static String dbName = "TestStandaloneGeoQueryDB";
 	private static String [] fNames = {"TestStandaloneGeoQueryDB-1"};
-	
+	private static DatabaseClient client = null;
 
 	@BeforeClass	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesGeoConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@Test	
@@ -61,8 +61,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -70,8 +68,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -89,10 +86,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		String result = convertXMLDocumentToString(resultDoc);
 		System.out.println(result);
-		assertTrue("Results are not proper", result.contains("start=\"1\" total=\"5\""));
-		
-		// release client
-		client.release();		
+		assertTrue("Results are not proper", result.contains("start=\"1\" total=\"5\""));		
 	}
 
 	@Test	
@@ -102,8 +96,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -111,8 +103,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -130,10 +121,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("5", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("5", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
@@ -143,8 +131,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -152,8 +138,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -171,10 +156,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
@@ -184,8 +166,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -193,16 +173,14 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
 		QueryManager queryMgr = client.newQueryManager();
 
 		// create query def
-		StructuredQueryBuilder qb = queryMgr.newStructuredQueryBuilder();
-		//StructuredQueryDefinition t = qb.geospatial(qb.geoElementPair(qb.element("g-elem-pair"), qb.element("lat"), qb.element("long")), qb.point(12, 5));
+		StructuredQueryBuilder qb = queryMgr.newStructuredQueryBuilder();		
 		String[] options = {"coordinate-system=wgs84","units=miles"};
 		StructuredQueryDefinition t = qb.geospatial(qb.geoElementPair(qb.element("g-elem-pair"), qb.element("lat"), qb.element("long")), FragmentScope.DOCUMENTS, options, qb.point(12, 5));
 		// create handle
@@ -213,10 +191,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);		
 	}
 
 	@Test	
@@ -226,8 +201,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -235,8 +208,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -254,10 +226,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);			
 	}
 
 	@Test 
@@ -267,8 +236,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -276,8 +243,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -296,10 +262,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);	
 	}
 
 	@Test	
@@ -309,8 +272,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -318,8 +279,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -337,10 +297,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 		System.out.println(convertXMLDocumentToString(resultDoc));
 
-		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);	
 	}
 
 	@Test	
@@ -350,8 +307,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml","element-attribute-pair-geo-data.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -359,8 +314,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -402,8 +356,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		Document resultDoc2 = resultsHandle2.get();
 		System.out.println("Results of Polygon :"+ convertXMLDocumentToString(resultDoc2));
 		assertTrue("Result returned is wrong", convertXMLDocumentToString(resultDoc2).contains("beijing city in china bangkok city in thailand norh pole place where Santa lives"));
-		// release client
-		client.release();		
 	}
 
 	@Test	
@@ -413,8 +365,6 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 
 		String[] filenames = {"geo-constraint1.xml", "geo-constraint2.xml", "geo-constraint3.xml", "geo-constraint4.xml", "geo-constraint5.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// set query option validation to true
 		ServerConfigurationManager srvMgr = client.newServerConfigManager();
 		srvMgr.readConfiguration();
@@ -422,8 +372,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		srvMgr.writeConfiguration();
 
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/standalone-geo-query/", "XML");
 		}
 
@@ -459,7 +408,7 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		System.out.println("Results of AND Query"+convertXMLDocumentToString(resultDoc1));
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		// release client
+		
 		// create NEAR query def
 		StructuredQueryDefinition c = qb.near(z,r);
 
@@ -470,14 +419,14 @@ public class TestStandaloneGeoQuery extends BasicJavaClientREST {
 		// get the result
 		Document resultDoc2 = resultsHandle2.get();
 		System.out.println("Results of NEAR Query"+convertXMLDocumentToString(resultDoc2));
-
-		client.release();		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
 	}
 }

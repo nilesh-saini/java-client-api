@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.XMLStreamReaderHandle;
 import com.marklogic.client.query.MatchDocumentSummary;
@@ -43,6 +42,7 @@ public class TestBug21183 extends BasicJavaClientREST {
 
 	private static String dbName = "TestBug21183DB";
 	private static String [] fNames = {"TestBug21183DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -50,6 +50,7 @@ public class TestBug21183 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -59,11 +60,8 @@ public class TestBug21183 extends BasicJavaClientREST {
 		
 		String[] filenames = {"bug21183.xml"};
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/bug-21183/", "XML");
 		}
 		
@@ -82,8 +80,7 @@ public class TestBug21183 extends BasicJavaClientREST {
 		String resultDoc1 = "";
 		
 		// get the result
-		for (MatchDocumentSummary result : resultsHandle.getMatchResults()) 
-		{
+		for (MatchDocumentSummary result : resultsHandle.getMatchResults()) {
 			for (Document s : result.getSnippets())
 			resultDoc1 = convertXMLDocumentToString(s);	
 			System.out.println(resultDoc1);
@@ -98,15 +95,14 @@ public class TestBug21183 extends BasicJavaClientREST {
 		System.out.println(resultDoc2);
 		assertTrue("Returned doc from XMLStreamReaderHandle has no namespace", resultDoc2.contains("<test xmlns:myns=\"http://mynamespace.com\">"));
 		assertTrue("Returned doc from XMLStreamReaderHandle has no attribute", resultDoc2.contains("<txt att=\"1\">a</txt>"));
-			    		
-		// release client
-		client.release();		
 	}
+
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();
 		cleanupRESTServer(dbName, fNames);
-	
 	}
 }

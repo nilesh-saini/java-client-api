@@ -34,7 +34,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StringQueryDefinition;
@@ -42,15 +41,15 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 
 	private static String dbName = "TestSearchMultibyteDB";
 	private static String [] fNames = {"TestSearchMultibyteDB-1"};
+	private static DatabaseClient client = null;
 	
-	
-
 	@BeforeClass	
 	public static void setUp() throws Exception 
 	{
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
 		setupAppServicesConstraint(dbName);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -68,11 +67,8 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 		String[] filenames = {"multibyte1.xml", "multibyte2.xml", "multibyte3.xml"};
 		String queryOptionName = "multibyteSearchOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/multibyte-search/", "XML");
 		}
 
@@ -92,10 +88,7 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 		Document resultDoc = resultsHandle.get();
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
-		assertXpathEvaluatesTo("/multibyte-search/multibyte1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/multibyte-search/multibyte1.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);		
 	}
 
 	@Test	
@@ -106,11 +99,8 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 		String[] filenames = {"multibyte1.xml", "multibyte2.xml", "multibyte3.xml"};
 		String queryOptionName = "multibyteSearchOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/multibyte-search/", "XML");
 		}
 
@@ -131,10 +121,7 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("2", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/multibyte-search/multibyte2.xml", "string(//*[local-name()='result'][1]//@*[local-name()='uri'])", resultDoc);
-		assertXpathEvaluatesTo("/multibyte-search/multibyte1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
+		assertXpathEvaluatesTo("/multibyte-search/multibyte1.xml", "string(//*[local-name()='result'][2]//@*[local-name()='uri'])", resultDoc);	
 	}
 
 	@Test	
@@ -145,11 +132,8 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 		String[] filenames = {"multibyte1.xml", "multibyte2.xml", "multibyte3.xml"};
 		String queryOptionName = "multibyteSearchOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/multibyte-search/", "XML");
 		}
 
@@ -170,15 +154,14 @@ public class TestSearchMultibyte extends BasicJavaClientREST {
 
 		assertXpathEvaluatesTo("1", "string(//*[local-name()='result'][last()]//@*[local-name()='index'])", resultDoc);
 		assertXpathEvaluatesTo("/multibyte-search/multibyte2.xml", "string(//*[local-name()='result']//@*[local-name()='uri'])", resultDoc);
-
-		// release client
-		client.release();		
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 	}
 }

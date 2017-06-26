@@ -39,7 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
+import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.admin.QueryOptionsManager;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.client.io.Format;
@@ -58,10 +58,11 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 
 	private static String dbName = "TestQueryOptionBuilderSortOrderDB";
 	private static String [] fNames = {"TestQueryOptionBuilderSortOrderDB-1"};
-	
+	private static DatabaseClient client;
 	
 	// Additional port to test for Uber port
 	private static int uberPort = 8000;
+	private static String hostname = null;;
 
 	@BeforeClass	
 	public static void setUp() throws Exception {
@@ -71,6 +72,8 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		
 		createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke");
 	    createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader");
+	    hostname = getRestServerHostName();
+	    client = DatabaseClientFactory.newClient(hostname, uberPort, dbName, new DigestAuthContext("eval-user", "x"));
 	}
 
 	@After
@@ -85,8 +88,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		System.out.println("Running testSortOrderDescendingScore");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", uberPort, dbName,"eval-user", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -138,9 +139,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][3]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test(expected = com.marklogic.client.FailedRequestException.class)	
@@ -149,8 +147,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		System.out.println("Running testSortOrderPrimaryDescScoreSecondaryAscDate");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", uberPort, dbName, "eval-user", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -209,9 +205,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][3]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@Test(expected = com.marklogic.client.FailedRequestException.class)	
@@ -220,8 +213,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		System.out.println("Running testMultipleSortOrder");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", uberPort, dbName, "eval-user", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -358,9 +349,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][3]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][4]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	} 
 
 	@Test(expected = com.marklogic.client.FailedRequestException.class)	
@@ -369,8 +357,6 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		System.out.println("Running testSortOrderAttribute");
 
 		String[] filenames = {"constraint1.xml", "constraint2.xml", "constraint3.xml", "constraint4.xml", "constraint5.xml"};
-
-		DatabaseClient client = DatabaseClientFactory.newClient("localhost", uberPort, dbName, "eval-user", "x", Authentication.DIGEST);
 
 		// write docs
 		for(String filename : filenames) {
@@ -496,14 +482,13 @@ public class TestQueryOptionBuilderSortOrder extends BasicJavaClientREST {
 		assertXpathEvaluatesTo("0012", "string(//*[local-name()='result'][1]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0011", "string(//*[local-name()='result'][2]//*[local-name()='id'])", resultDoc);
 		assertXpathEvaluatesTo("0026", "string(//*[local-name()='result'][3]//*[local-name()='id'])", resultDoc);
-
-		// release client
-		client.release();	
 	}
 
 	@AfterClass	
 	public static void tearDown() throws Exception {
 		System.out.println("In tear down");
+		// release client
+		client.release();	
 		cleanupRESTServer(dbName, fNames);
 		deleteRESTUser("eval-user");
 		deleteUserRole("test-eval");

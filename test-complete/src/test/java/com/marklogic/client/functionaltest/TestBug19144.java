@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.QueryManager;
@@ -41,6 +40,7 @@ public class TestBug19144 extends BasicJavaClientREST {
 
 	private static String dbName = "TestBug19144DB";
 	private static String [] fNames = {"TestBug19144DB-1"};
+	private static DatabaseClient client = null;
 	
 @BeforeClass
 	public static void setUp() throws Exception 
@@ -48,6 +48,7 @@ public class TestBug19144 extends BasicJavaClientREST {
 	  System.out.println("In setup");
 	  configureRESTServer(dbName, fNames);
 	  setupAppServicesConstraint(dbName);
+	  client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 @Test
@@ -58,11 +59,8 @@ public class TestBug19144 extends BasicJavaClientREST {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/bug19144/", "XML");
 		}
 		
@@ -83,10 +81,7 @@ public class TestBug19144 extends BasicJavaClientREST {
 		
 		System.out.println(result);
 		
-		assertEquals("{", result.substring(0, 1));
-        		
-		// release client
-		client.release();		
+		assertEquals("{", result.substring(0, 1));		
 	}
 
 @Test
@@ -97,11 +92,8 @@ public class TestBug19144 extends BasicJavaClientREST {
 		String[] filenames = {"aggr1.xml", "aggr2.xml", "aggr3.xml", "aggr4.xml", "aggr5.xml"};
 		String queryOptionName = "aggregatesOpt.xml";
 
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
-		
 		// write docs
-		for(String filename : filenames)
-		{
+		for(String filename : filenames) {
 			writeDocumentUsingInputStreamHandle(client, filename, "/bug19144/", "XML");
 		}
 		
@@ -123,15 +115,14 @@ public class TestBug19144 extends BasicJavaClientREST {
 		System.out.println(result);
 		
 		assertEquals("<", result.substring(0, 1));
-        		
-		// release client
-		client.release();		
 	}
+
 	@AfterClass
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		cleanupRESTServer(dbName, fNames);
-		
+		// release client
+		client.release();
+		cleanupRESTServer(dbName, fNames);		
 	}
 }

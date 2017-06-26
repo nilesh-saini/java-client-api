@@ -33,11 +33,9 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory.Authentication;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.ResourceNotFoundException;
 import com.marklogic.client.admin.ServerConfigurationManager;
-import com.marklogic.client.admin.ServerConfigurationManager.Policy;
 import com.marklogic.client.admin.ServerConfigurationManager.UpdatePolicy;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.JSONDocumentManager;
@@ -48,13 +46,14 @@ import com.marklogic.client.io.StringHandle;
 public class TestOptimisticLocking extends BasicJavaClientREST{
 	private static String dbName = "TestOptimisticLockingDB";
 	private static String [] fNames = {"TestOptimisticLockingDB-1"};
-	
+	private static DatabaseClient client = null;
 	private static int restPort=8011;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
 		System.out.println("In setup");
 		configureRESTServer(dbName, fNames);
+		client = getDatabaseClientWithDigest("rest-admin", "x");
 	}
 
 	@After
@@ -73,9 +72,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		String uri = "/optimistic-locking/";
 		String docId = uri + filename;
 		long badVersion = 1111;
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for the server configuration
 		ServerConfigurationManager configMgr = client.newServerConfigManager();
@@ -111,8 +107,7 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 
 		// CREATE
 		// write document with bad version
-		try 
-		{
+		try {
 			docMgr.write(desc, handle);
 		} catch (FailedRequestException e) { exception = e.toString(); }
 
@@ -230,9 +225,7 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		boolean isVerifyDeleteExceptionThrown = verifyDeleteException.contains(expectedVerifyDeleteException);
 		assertTrue("Exception is not thrown", isVerifyDeleteExceptionThrown);
 		System.out.println("Delete exception" +verifyDeleteException);
-		// release client
-		client.release();
-
+		
 		try {
 			Thread.sleep(30000);
 		} catch (InterruptedException e) {
@@ -252,9 +245,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		String uri = "/optimistic-locking/";
 		String docId = uri + filename;
 		long badVersion = 1111;
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for the server configuration
 		ServerConfigurationManager configMgr = client.newServerConfigManager();
@@ -384,9 +374,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		boolean isVerifyDeleteExceptionThrown = verifyDeleteException.contains(expectedVerifyDeleteException);
 		assertTrue("Exception is not thrown", isVerifyDeleteExceptionThrown);
 
-		// release client
-		client.release();
-
 		try {
 			Thread.sleep(30000);
 		} catch (InterruptedException e) {
@@ -406,9 +393,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		String uri = "/optimistic-locking/";
 		String docId = uri + filename;
 		long badVersion = 1111;
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for the server configuration
 		ServerConfigurationManager configMgr = client.newServerConfigManager();
@@ -538,9 +522,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		boolean isVerifyDeleteExceptionThrown = verifyDeleteException.contains(expectedVerifyDeleteException);
 		assertTrue("Exception is not thrown", isVerifyDeleteExceptionThrown);
 
-		// release client
-		client.release();
-
 		try {
 			Thread.sleep(30000);
 		} catch (InterruptedException e) {
@@ -559,9 +540,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		String uri = "/optimistic-locking/";
 		String docId = uri + filename;
 		long badVersion = 1111;
-
-		// connect the client
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
 
 		// create a manager for the server configuration
 		ServerConfigurationManager configMgr = client.newServerConfigManager();
@@ -635,9 +613,6 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		boolean isVerifyDeleteExceptionThrown = verifyDeleteException.contains(expectedVerifyDeleteException);
 		assertTrue("Exception is not thrown", isVerifyDeleteExceptionThrown);
 
-		// release client
-		client.release();
-
 		try {
 			Thread.sleep(30000);
 		} catch (InterruptedException e) {
@@ -651,7 +626,7 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 	public static void tearDown() throws Exception
 	{
 		System.out.println("In tear down");
-		DatabaseClient client = getDatabaseClient("rest-admin", "x", Authentication.DIGEST);
+		
 		ServerConfigurationManager configMgr = client.newServerConfigManager();
 
 		// read the server configuration from the database
@@ -665,6 +640,5 @@ public class TestOptimisticLocking extends BasicJavaClientREST{
 		configMgr.writeConfiguration();
 		client.release();
 		cleanupRESTServer(dbName, fNames);
-
 	}
 }
