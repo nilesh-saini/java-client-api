@@ -115,6 +115,15 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		ConnectedRESTQA.updateTemporalCollectionForLSQT(dbName,
 				temporalLsqtCollectionName, true);
 		Thread.sleep(1000);
+		
+		createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke","temporal:statement-set-system-time", "temporal-document-protect", "temporal-document-wipe");
+		
+		createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader","temporal-admin");
+		createRESTUser("eval-readeruser", "x","rest-reader");
+		int restPort = getRestServerPort();
+		String hostname = getRestServerHostName();
+		writerClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-user", "x");             
+	
 	}
 
 	@AfterClass
@@ -142,17 +151,6 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 				axisSystemName);
 		 deleteDB(schemadbName);
 		deleteForest(schemafNames[0]);
-	}
-
-	@Before
-	public void setUp() throws Exception {
-		createUserRolesWithPrevilages("test-eval","xdbc:eval", "xdbc:eval-in","xdmp:eval-in","any-uri","xdbc:invoke","temporal:statement-set-system-time", "temporal-document-protect", "temporal-document-wipe");
-		
-		createRESTUser("eval-user", "x", "test-eval","rest-admin","rest-writer","rest-reader","temporal-admin");
-		createRESTUser("eval-readeruser", "x","rest-reader");
-		int restPort = getRestServerPort();
-		String hostname = getRestServerHostName();
-		writerClient = getDatabaseClientOnDatabaseWithDigest(hostname, restPort, dbName, "eval-user", "x");             
 	}
 
 	@After
@@ -1029,7 +1027,7 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	    t2.rollback();
 	}
 	
-	@Test
+	@Ignore
 	/* Test bitemporal protections - NOUPDATE
 	 * With different transactions. 
 	 * Write doc in T1 with transaction timeout 2 minutes
