@@ -1027,7 +1027,7 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 	    t2.rollback();
 	}
 	
-	@Ignore
+	@Test
 	/* Test bitemporal protections - NOUPDATE
 	 * With different transactions. 
 	 * Write doc in T1 with transaction timeout 2 minutes
@@ -1044,6 +1044,7 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 		String docId = "javaSingleJSONDoc.json";
 		Calendar insertTime = DatatypeConverter.parseDateTime("2005-01-01T00:00:01");
 		Calendar updateTime = DatatypeConverter.parseDateTime("2005-01-01T00:00:11");
+		Calendar updateTime2 = DatatypeConverter.parseDateTime("2005-01-01T00:05:11");
 		JacksonDatabindHandle<ObjectNode> handle = getJSONDocumentHandle("2001-01-01T00:00:00", 
 				"2011-12-31T23:59:59", 
 				"999 Skyway Park - JSON",
@@ -1060,15 +1061,17 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 
 			docMgr = writerClient.newJSONDocumentManager();
 			t1 = writerClient.openTransaction("T1", 120);
-			docMgr.write("javaSingleJSONDocV1.json", docId, null, handle, null, t1, temporalLsqtCollectionName, insertTime);		
+			docMgr.write("javaSingleJSONDocV1.json", docId, null, handle, null, t1, temporalLsqtCollectionName, insertTime);
+			t1.commit();
 			t2 = writerClient.openTransaction("T2", 30);
 			//Protect document for 30 sec from delete and update. Use Duration.
 			docMgr.protect(docId, temporalLsqtCollectionName, ProtectionLevel.NOUPDATE, DatatypeFactory.newInstance().newDuration("PT30S"), t2);
-			
+			t1 = writerClient.openTransaction("T11", 120);
 			StringBuilder str = new StringBuilder();
 			try {
 				// Use t1 to write
 				docMgr.write(docId, null, handleUpd, null, t1, temporalLsqtCollectionName, updateTime);
+				t1.commit();
 			}
 			catch(Exception ex) {
 				str.append(ex.getMessage());
@@ -1082,13 +1085,16 @@ public class TestBiTempMetaValues extends BasicJavaClientREST {
 			System.out.println("Exceptions:" + ex.getMessage());
 		}
 		finally {
+			t1 = writerClient.openTransaction("T12", 120);
 			if (t1 != null) {
 				// Try to update when T2 has timed out
-				docMgr.write(docId, null, handleUpd, null, t1, temporalLsqtCollectionName, updateTime);	
+				docMgr.write(docId, null, handleUpd, null, t1, temporalLsqtCollectionName, updateTime2);
+				t1.commit();
 				Thread.sleep(5000);
 
 				JSONDocumentManager jsonDocMgr = writerClient.newJSONDocumentManager();
-				DocumentPage readResults = jsonDocMgr.read(t1, docId);
+				t1 = writerClient.openTransaction("T13", 120);
+				DocumentPage readResults = jsonDocMgr.read(t1, "javaSingleJSONDocV1.json");
 				System.out.println("Number of results = " + readResults.size());
 				assertEquals("Wrong number of results", 1, readResults.size());
 				t1.commit();
